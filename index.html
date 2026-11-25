@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mláticí rotor 3D – simulátor nastavení</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9ece6; --surface:#fbfcf9; --surface2:#dfe3db; --ink:#1a221c; --muted:#5d675f; --line:#c8cfc4;
+  --accent:#2d6a3e; --accentInk:#ffffff; --stage1:#f4f6f2; --stage2:#d9dfd6;
+  --air:#2f78b0; --good:#2d7a4a; --warn:#bf6a00; --bad:#b3261e; --track:#d3d9cf;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131714; --surface:#1b201c; --surface2:#262c27; --ink:#e7ece5; --muted:#9aa59b; --line:#36403a;
+    --accent:#5fb877; --accentInk:#0f1a12; --stage1:#222823; --stage2:#121512;
+    --air:#6db2e6; --good:#5fc485; --warn:#f0a040; --bad:#ff6a5c; --track:#323a34;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131714; --surface:#1b201c; --surface2:#262c27; --ink:#e7ece5; --muted:#9aa59b; --line:#36403a;
+  --accent:#5fb877; --accentInk:#0f1a12; --stage1:#222823; --stage2:#121512;
+  --air:#6db2e6; --good:#5fc485; --warn:#f0a040; --bad:#ff6a5c; --track:#323a34;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:1680px;margin:0 auto;padding:22px 16px 48px}
+h1{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;font-weight:700;font-size:clamp(28px,4.2vw,46px);line-height:1.02;margin:0 0 8px}
+.lead{margin:0 0 16px;color:var(--muted);max-width:70ch}
+h2{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;font-weight:600;font-size:22px;margin:0 0 10px}
+.stage{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,var(--stage1),var(--stage2))}
+#view{position:relative;width:100%;height:560px;touch-action:none;cursor:grab}
+#view:active{cursor:grabbing}
+#view canvas{display:block}
+.tags{position:absolute;inset:0;pointer-events:none}
+.tag{position:absolute;left:0;top:0;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;
+  background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);border-radius:12px;padding:1px 8px 1px 2px;will-change:transform}
+.tag b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accentInk);font-size:12px}
+@media (max-width:640px){.tag span{display:none}.tag{padding:1px}}
+.toolbar{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 20px)}
+.toolbar button{font:inherit;font-size:14px;font-weight:600;padding:6px 11px;border-radius:6px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 90%,transparent);color:var(--ink);cursor:pointer}
+.toolbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accentInk)}
+.hint{position:absolute;right:10px;bottom:8px;font-size:13px;color:var(--muted);pointer-events:none;text-align:right}
+.err{position:absolute;inset:0;display:none;place-items:center;padding:20px;text-align:center;color:var(--muted)}
+.below{display:flex;flex-wrap:wrap;gap:6px 20px;margin:10px 2px 0;font-size:14px;color:var(--muted)}
+.below strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:12px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;margin-top:16px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;grid-template-areas:"set view res";gap:16px;align-items:start}
+.layout .set{grid-area:set}.layout .center{grid-area:view;min-width:0}.layout .res{grid-area:res}
+.layout .panel{padding:16px}
+@media (max-width:1180px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"view view" "set res"}}
+@media (max-width:760px){.layout{grid-template-columns:1fr;grid-template-areas:"view" "set" "res"}}
+.layout .crops{width:100%;display:grid;grid-template-columns:1fr 1fr}.layout .crops button{padding:8px 6px;border-bottom:1px solid var(--line)}.layout .crops button:nth-child(2n){border-right:0}.layout .crops button:nth-child(n+3){border-bottom:0}
+.ctl-head output{white-space:nowrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px}
+.crops{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:18px;width:max-content;max-width:100%}
+.crops button{font:inherit;font-weight:500;border:0;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer;border-right:1px solid var(--line)}
+.crops button:last-child{border-right:0}
+.crops button[aria-pressed="true"]{background:var(--accent);color:var(--accentInk)}
+.ctl{margin-bottom:16px}
+.ctl-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ctl-head label{font-weight:600}
+.ctl-head output{font-family:"Barlow Condensed",system-ui,sans-serif;font-weight:600;font-size:20px;font-variant-numeric:tabular-nums}
+.ctl-sub{font-size:13px;color:var(--muted);margin-top:-2px}
+.ctl-row{display:grid;grid-template-columns:40px 1fr 40px;gap:10px;align-items:center;margin-top:6px}
+.step{width:40px;height:40px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.btn{font:inherit;font-weight:600;padding:9px 16px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--accentInk);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--air);outline-offset:2px}
+details{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600}
+.cal{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.cal label{display:block;font-size:14px;color:var(--muted)}
+.cal input{width:100%;font:inherit;padding:7px 9px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+.cal p{grid-column:1/-1;margin:0;font-size:14px;color:var(--muted)}
+.status{border-left:5px solid var(--good);background:var(--surface2);padding:12px 14px;border-radius:0 6px 6px 0;margin-bottom:16px}
+.status p{margin:0}.status .st-title{font-weight:600;margin-bottom:2px}
+.status.warn{border-color:var(--warn)}.status.bad{border-color:var(--bad)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.metric .m-lab{font-size:14px;color:var(--muted)}
+.metric .m-val{font-family:"Barlow Condensed",system-ui,sans-serif;font-weight:700;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.metric .m-val small{font-size:18px;font-weight:600;color:var(--muted)}
+.bar{height:6px;background:var(--track);border-radius:3px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;width:0;background:var(--good);transition:width .25s,background .25s}
+.m-sub{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.35}
+.metric.total{grid-column:1/-1;border-top:1px solid var(--line);padding-top:12px}
+.chartbox{margin-top:16px}
+#chart{display:block;width:100%;height:260px}
+@media (max-width:560px){#chart{height:220px}}
+.chart-key{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted);margin-top:6px}
+.ln{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.note{color:var(--muted);font-size:14px;max-width:82ch;margin-top:16px}
+@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Axiální mláticí ústrojí ve 3D</h1>
+  <p class="lead">Jednorotorové podélné mlácení s košem, separací a čisticím ústrojím. Otočte si stroj myší nebo prstem, přepněte na řez a měňte nastavení. Hodnoty z návodu ke svému kombajnu zadáte v kalibraci.</p>
+
+  <div class="layout">
+    <section class="panel set">
+      <h2>Nastavení</h2>
+      <div class="crops" role="group" aria-label="Plodina">
+        <button data-crop="psenice" aria-pressed="true">Pšenice</button>
+        <button data-crop="jecmen" aria-pressed="false">Ječmen</button>
+        <button data-crop="repka" aria-pressed="false">Řepka</button>
+        <button data-crop="kukurice" aria-pressed="false">Kukuřice</button>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="rpm">Otáčky rotoru</label><output id="o-rpm"></output></div>
+        <div class="ctl-sub" id="o-v"></div>
+        <div class="ctl-row"><button class="step" data-k="rpm" data-d="-10" aria-label="Snížit otáčky">−</button><input type="range" id="rpm" data-k="rpm" min="200" max="1300" step="5"><button class="step" data-k="rpm" data-d="10" aria-label="Zvýšit otáčky">+</button></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="clr">Mezera mláticího koše</label><output id="o-clr"></output></div>
+        <div class="ctl-row"><button class="step" data-k="clr" data-d="-1" aria-label="Zúžit mezeru">−</button><input type="range" id="clr" data-k="clr" min="2" max="50" step="1"><button class="step" data-k="clr" data-d="1" aria-label="Rozšířit mezeru">+</button></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="feed">Zatížení stroje (průchodnost)</label><output id="o-feed"></output></div>
+        <div class="ctl-sub">Roste s pojezdovou rychlostí a hustotou porostu</div>
+        <div class="ctl-row"><button class="step" data-k="feed" data-d="-2" aria-label="Snížit zatížení">−</button><input type="range" id="feed" data-k="feed" min="5" max="80" step="1"><button class="step" data-k="feed" data-d="2" aria-label="Zvýšit zatížení">+</button></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="moist">Vlhkost zrna</label><output id="o-moist"></output></div>
+        <div class="ctl-row"><button class="step" data-k="moist" data-d="-1" aria-label="Snížit vlhkost">−</button><input type="range" id="moist" data-k="moist" min="8" max="32" step="1"><button class="step" data-k="moist" data-d="1" aria-label="Zvýšit vlhkost">+</button></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="slope">Podélný sklon terénu</label><output id="o-slope"></output></div>
+        <div class="ctl-sub">Kladný sklon je jízda do kopce, záporný z kopce</div>
+        <div class="ctl-row"><button class="step" data-k="slope" data-d="-1" aria-label="Víc z kopce">−</button><input type="range" id="slope" data-k="slope" min="-12" max="12" step="1"><button class="step" data-k="slope" data-d="1" aria-label="Víc do kopce">+</button></div>
+      </div>
+      <h2 style="margin-top:22px">Čištění</h2>
+      <div class="ctl">
+        <div class="ctl-head"><label for="fan">Otáčky ventilátoru</label><output id="o-fan"></output></div>
+        <div class="ctl-sub" id="o-air"></div>
+        <div class="ctl-row"><button class="step" data-k="fan" data-d="-20" aria-label="Snížit otáčky ventilátoru">−</button><input type="range" id="fan" data-k="fan" min="400" max="1500" step="10"><button class="step" data-k="fan" data-d="20" aria-label="Zvýšit otáčky ventilátoru">+</button></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="up">Otevření horního síta</label><output id="o-up"></output></div>
+        <div class="ctl-row"><button class="step" data-k="up" data-d="-1" aria-label="Přivřít horní síto">−</button><input type="range" id="up" data-k="up" min="0" max="25" step="1"><button class="step" data-k="up" data-d="1" aria-label="Otevřít horní síto">+</button></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><label for="low">Otevření dolního síta</label><output id="o-low"></output></div>
+        <div class="ctl-row"><button class="step" data-k="low" data-d="-1" aria-label="Přivřít dolní síto">−</button><input type="range" id="low" data-k="low" min="0" max="20" step="1"><button class="step" data-k="low" data-d="1" aria-label="Otevřít dolní síto">+</button></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="bOpt">Nastavit doporučené</button>
+        <button class="btn ghost" id="bPause">Pozastavit</button>
+      </div>
+      <details>
+        <summary>Kalibrace podle vašeho stroje</summary>
+        <div class="cal">
+          <p>Výchozí čísla jsou orientační. Přepište je hodnotami z návodu k obsluze vašeho kombajnu pro zvolenou plodinu.</p>
+          <div><label for="calRpm">Doporučené otáčky rotoru (ot/min)</label><input type="number" id="calRpm" min="150" max="1500" step="10"></div>
+          <div><label for="calClr">Doporučená mezera koše (mm)</label><input type="number" id="calClr" min="2" max="60" step="1"></div>
+          <div><label for="calDia">Průměr rotoru (mm)</label><input type="number" id="calDia" min="400" max="1000" step="1"></div>
+          <div><label for="calCap">Jmenovitá průchodnost (t/h)</label><input type="number" id="calCap" min="5" max="120" step="1"></div>
+          <div><label for="calFan">Doporučené otáčky ventilátoru (ot/min)</label><input type="number" id="calFan" min="300" max="1600" step="10"></div>
+          <div><label for="calUp">Doporučené otevření horního síta (mm)</label><input type="number" id="calUp" min="1" max="25" step="1"></div>
+          <div><label for="calLow">Doporučené otevření dolního síta (mm)</label><input type="number" id="calLow" min="1" max="20" step="1"></div>
+        </div>
+      </details>
+    </section>
+    <div class="center">
+  <section class="stage">
+      <div id="view"></div>
+      <div class="tags" id="tags">
+        <div class="tag" data-n="1"><b>1</b><span>Rotor</span></div>
+        <div class="tag" data-n="2"><b>2</b><span>Mláticí koš</span></div>
+        <div class="tag" data-n="3"><b>3</b><span>Separační koš</span></div>
+        <div class="tag" data-n="4"><b>4</b><span>Vynášecí šneky</span></div>
+        <div class="tag" data-n="5"><b>5</b><span>Spádová deska</span></div>
+        <div class="tag" data-n="6"><b>6</b><span>Ventilátor</span></div>
+        <div class="tag" data-n="7"><b>7</b><span>Předsíto</span></div>
+        <div class="tag" data-n="8"><b>8</b><span>Horní síto</span></div>
+        <div class="tag" data-n="9"><b>9</b><span>Dolní síto</span></div>
+        <div class="tag" data-n="10"><b>10</b><span>Šnek čistého zrna</span></div>
+        <div class="tag" data-n="11"><b>11</b><span>Klasový šnek</span></div>
+        <div class="tag" data-n="12"><b>12</b><span>Vratka zpět do rotoru</span></div>
+        <div class="tag" data-n="13"><b>13</b><span>Ztráty za strojem</span></div>
+      </div>
+      <div class="toolbar" role="group" aria-label="Pohled">
+        <button data-view="all" aria-pressed="true">Celý stroj</button>
+        <button data-view="rotor" aria-pressed="false">Rotor a koš</button>
+        <button data-view="cut" aria-pressed="false">Příčný řez</button>
+        <button data-view="shoe" aria-pressed="false">Čištění</button>
+        <button id="bCover" aria-pressed="false">Skrýt kryt</button>
+        <button id="bAir" aria-pressed="true">Proudění vzduchu</button>
+        <button id="bTags" aria-pressed="true">Popisky</button>
+      </div>
+      <div class="hint">Levým tlačítkem otáčíte, pravým posouváte, kolečkem přibližujete</div>
+      <div class="err" id="err">3D zobrazení se nepodařilo spustit. Prohlížeč pravděpodobně nepodporuje WebGL.</div>
+    </section>
+    <div class="below" aria-live="polite">
+      <span><i class="sw" style="background:#e2a92b"></i>zdravé zrno</span>
+      <span><i class="sw" style="background:#d23b22"></i>poškozené zrno</span>
+      <span><i class="sw" style="background:#a8894a"></i>nevymlácený klas</span>
+      <span><i class="sw" style="background:#8c7cf0"></i>zrno z vratky</span>
+      <span><i class="sw" style="background:transparent;border:2px solid #ff3b30;width:12px;height:12px"></i>ztráta za strojem</span>
+    </div>
+
+    </div>
+    <section class="panel res">
+      <h2>Výsledek</h2>
+      <div class="status" id="status"><p class="st-title"></p><p class="st-text"></p></div>
+      <div class="metrics">
+        <div class="metric" id="m-damage"><div class="m-lab">Poškození zrna</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div><div class="m-sub" id="s-damage"></div></div>
+        <div class="metric" id="m-unthr"><div class="m-lab">Ztráty nevymlácením</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div></div>
+        <div class="metric" id="m-sep"><div class="m-lab">Ztráty separací</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div><div class="m-sub" id="s-sep"></div></div>
+        <div class="metric" id="m-clean"><div class="m-lab">Ztráty čištěním</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div></div>
+        <div class="metric" id="m-imp"><div class="m-lab">Nečistoty ve vyčištěném zrnu</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div></div>
+        <div class="metric" id="m-tail"><div class="m-lab">Vratka do klasového šneku</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div><div class="m-sub" id="s-tail"></div></div>
+        <div class="metric" id="m-opt"><div class="m-lab">Doporučené otáčky</div><div class="m-val"><span>0</span> <small>ot/min</small></div></div>
+        <div class="metric total" id="m-loss"><div class="m-lab">Celkové ztráty zrna za strojem</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel chartbox">
+    <h2>Kompromis mezi poškozením a ztrátami</h2>
+    <canvas id="chart" aria-label="Graf poškození zrna a ztrát v závislosti na otáčkách rotoru"></canvas>
+    <div class="chart-key">
+      <span><i class="ln" style="border-color:var(--warn)"></i>poškození zrna</span>
+      <span><i class="ln" style="border-color:var(--air)"></i>celkové ztráty</span>
+      <span><i class="ln" style="border-color:var(--muted);border-top-style:dashed"></i>součet</span>
+      <span><i class="ln" style="border-color:var(--accent)"></i>vaše otáčky</span>
+      <span><i class="sw" style="background:var(--good);opacity:.35;border-radius:2px;width:14px;height:12px"></i>rozumné pracovní okno</span>
+    </div>
+  </section>
+
+  <p class="note">Model zachycuje typické trendy, ne přesné hodnoty konkrétního stroje: vyšší otáčky a užší koš zvyšují poškození, nižší otáčky a širší koš zvyšují nevymlácené klasy, přetížení zvyšuje ztráty separací. Silný vzduch a zavřené horní síto vynášejí zrno za stroj, slabý vzduch a otevřené dolní síto pouštějí nečistoty do čistého zrna, zavřené síta a silný vzduch zvyšují vratku, která se v rotoru domlacuje, zvyšuje poškození zrna a zatěžuje separaci. Střed modelu se řídí hodnotami v kalibraci. V animaci je rotace zpomalená asi desetkrát, zrna jsou zvětšená a podíl ztracených a poškozených zrn je zhruba šestkrát zveličený, aby byl vidět.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+/* ================= model ================= */
+const EXAG=6,VIS=0.1;
+const CROPS={
+  psenice:{fan:1050,up:14,low:8,ref:900,refC:12,mOpt:14,kpe:6,ks:[.032,.018,.018],kc:0xe2a92b,ear:[.10,.026,.026],earC:0xd2ae5a,earShape:'ear'},
+  jecmen:{fan:1000,up:14,low:7,ref:850,refC:10,mOpt:14,kpe:6,ks:[.036,.016,.016],kc:0xdcae4a,ear:[.11,.024,.024],earC:0xcfb067,earShape:'ear'},
+  repka:{fan:700,up:8,low:3,ref:650,refC:20,mOpt:9,kpe:8,ks:[.018,.018,.018],kc:0x5a3a22,ear:[.08,.013,.013],earC:0x9a8a4a,earShape:'pod'},
+  kukurice:{fan:1100,up:18,low:12,ref:400,refC:35,mOpt:22,kpe:8,ks:[.042,.032,.022],kc:0xf0b419,ear:[.16,.05,.05],earC:0xe9b52a,earShape:'cob'}
+};
+const MACH={dia:760,cap:40};
+const LIM={rpm:[200,1300],clr:[2,50],feed:[5,80],moist:[8,32],fan:[400,1500],up:[0,25],low:[0,20],slope:[-12,12]};
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const state={crop:'psenice',rpm:900,clr:12,feed:35,moist:14,fan:1050,up:14,low:8,slope:0,paused:reduced};
+let cur=null,optN=900;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(v,d=1)=>v.toFixed(d).replace('.',',');
+const vTip=rpm=>Math.PI*MACH.dia/1000*rpm/60;
+function model(s){
+  const c=CROPS[s.crop],r=s.rpm/c.ref,rc=s.clr/c.refC,dm=s.moist-c.mOpt,fr=s.feed/MACH.cap;
+  const f=s.fan/c.fan,o1=Math.max(s.up/c.up,0.08),o2=Math.max(s.low/c.low,0.08);
+  // tailings: grain riding over the end of the upper sieve + grain not passing the lower sieve
+  // longitudinal slope: uphill speeds material over the sieves, downhill piles it at the front
+  const g=s.slope||0,up=Math.max(0,g)/10,dn=Math.max(0,-g)/10;
+  const tailsU=clamp(5*Math.pow(o1,-1.2)*Math.exp(1.5*(f-1))*Math.pow(fr,0.5)*(1+0.8*up),0,60);
+  const tailsL=clamp(7*Math.pow(o2,-1.3)*Math.exp(1.0*(f-1))*Math.pow(fr,0.5),0,60);
+  const tails=clamp(tailsU+tailsL,0,80);
+  const frE=fr*(1+0.6*tails/100); // returned material adds load to the rotor
+  const dmgBase=clamp(0.4*Math.exp(3.5*(r-1))*Math.pow(rc,-0.6)*Math.exp(-0.07*dm)*(1+0.15*Math.max(0,1-fr)),0,30);
+  const dmgRet=clamp(tails/100*(1.5*dmgBase+0.5),0,20);
+  const damage=clamp(dmgBase+dmgRet,0,30);
+  const unthr=clamp(0.3*Math.exp(-4.5*(r-1))*Math.pow(rc,0.9)*Math.exp(0.08*dm)*Math.pow(fr,0.4),0,30);
+  const sepF=x=>0.15*Math.exp(3.2*(x-1))*Math.pow(r,-0.8)*Math.exp(0.05*dm)*Math.pow(rc,-0.3);
+  const sep=clamp(sepF(frE),0,30),sepRet=Math.max(0,sep-clamp(sepF(fr),0,30));
+  const clean=clamp((0.12*Math.exp(6*(f-1))*Math.pow(o1,-1.6)*Math.pow(frE,0.8)+0.1*Math.exp(4*(1-f))*Math.pow(frE,1.5))*Math.exp(1.2*up+0.7*dn),0,30);
+  const imp=clamp(0.8*Math.exp(4.5*(1-f))*Math.pow(o1,0.6)*Math.pow(o2,1.4)*(1+1.0*dn),0,40);
+  return {g,up,dn,r,rc,fr,frE,f,o1,o2,damage,dmgBase,dmgRet,unthr,sep,sepRet,clean,imp,tails,tailsU,tailsL,loss:unthr+sep+clean};
+}
+function optimumRpm(s){let best=s.rpm,bv=Infinity;for(let n=LIM.rpm[0];n<=LIM.rpm[1];n+=5){const m=model({...s,rpm:n});const sc=m.damage+m.loss;if(sc<bv){bv=sc;best=n;}}return best;}
+
+/* ================= colours ================= */
+const col={};
+function readColors(){const cs=getComputedStyle(document.documentElement);
+  ['surface','ink','muted','line','accent','air','good','warn','bad'].forEach(k=>col[k]=cs.getPropertyValue('--'+k).trim());}
+
+/* ================= UI ================= */
+const $=id=>document.getElementById(id);
+function setMetric(id,v,g,w){const el=$(id);el.querySelector('span').textContent=fmt(v);const i=el.querySelector('.bar i');
+  if(i){i.style.width=Math.min(100,v/(w*1.6)*100)+'%';i.style.background=v<=g?col.good:v<=w?col.warn:col.bad;}}
+function status(){
+  const m=cur,c=CROPS[state.crop];let lvl='good',t='Dobré nastavení',s='Zrno se vymlátí čistě, poškození i ztráty jsou nízké.';
+  if(m.damage>3&&m.r>1.12){lvl='bad';t='Otáčky jsou příliš vysoké';s='Rotor do zrna bije moc prudce, zrno se láme a drtí. Snižte otáčky, případně rozšiřte koš.';}
+  else if(m.unthr>1.2&&m.r<0.88){lvl='bad';t='Otáčky jsou příliš nízké';s='Klasy se nestihnou vymlátit a zrno v nich odchází se slámou za stroj. Zvyšte otáčky.';}
+  else if(m.damage>3&&m.rc<0.8){lvl='bad';t='Mláticí koš je příliš sevřený';s='Úzká mezera mačká zrno mezi lišty rotoru a koš. Rozšiřte mezeru.';}
+  else if(m.unthr>1.2&&m.rc>1.4){lvl='bad';t='Mláticí koš je příliš otevřený';s='Klasy proklouznou širokou mezerou bez vymlácení. Mezeru zužte.';}
+  else if(m.sep>1.2){lvl='bad';t='Stroj je přetížený';s='Vrstva materiálu je tak silná, že zrno nestihne propadnout košem a odchází se slámou. Zpomalte jízdu.';}
+  else if(m.clean>0.9&&m.f>1.1){lvl='bad';t='Ventilátor fouká příliš silně';s='Vzduch vynáší zrno přes síta za stroj. Uberte otáčky ventilátoru.';}
+  else if(m.clean>0.9&&m.o1<0.65){lvl='bad';t='Horní síto je příliš zavřené';s='Zrno nestihne propadnout a odchází s plevami za stroj. Horní síto otevřete.';}
+  else if(m.imp>4&&m.f<0.9){lvl='bad';t='Ventilátor fouká slabě';s='Plevy se neodfouknou a končí ve vyčištěném zrnu. Přidejte otáčky ventilátoru.';}
+  else if(m.imp>4&&m.o2>1.25){lvl='bad';t='Dolní síto je příliš otevřené';s='Do čistého zrna propadají plevy a úlomky klasů. Dolní síto přivřete.';}
+  else if(m.tails>35){lvl='bad';t='Vratka je příliš velká';s='Zrno, které přepadá přes konec horního síta nebo nepropadne dolním sítem, se vrací do rotoru. Při domlácení se poškozuje a navíc zatěžuje separaci. '+(m.tailsU>m.tailsL?'Otevřete horní síto nebo uberte vzduch.':'Otevřete dolní síto.');}
+  else if(m.up>0.4&&m.clean>0.45){lvl=m.clean>0.9?'bad':'warn';t='Jízda do kopce';s='Materiál ujíždí po sítech dozadu rychleji a zrno odchází s plevami za stroj. Uberte vzduch, pootevřete horní síto nebo zpomalte.';}
+  else if(m.dn>0.4&&(m.clean>0.45||m.imp>2)){lvl=(m.clean>0.9||m.imp>4)?'bad':'warn';t='Jízda z kopce';s='Materiál se hromadí v přední části sít, vzduch jím hůř prochází a do zrna se dostávají nečistoty. Přidejte vzduch nebo snižte zatížení.';}
+  else if(m.imp>2||m.tails>22||m.clean>0.45){lvl='warn';
+    if(m.imp>2){t='Vyčištěné zrno je špinavé';s=m.f<1?'Zkuste přidat vzduch.':'Zkuste přivřít dolní síto.';}
+    else if(m.tails>22){t='Roste vratka';s='Vrácené zrno se v rotoru domlacuje a poškozuje. '+(m.tailsU>m.tailsL?'Zkuste pootevřít horní síto nebo ubrat vzduch.':'Zkuste pootevřít dolní síto.');}
+    else{t='Rostou ztráty čištěním';s=m.f>1?'Zkuste ubrat vzduch.':'Zkuste otevřít horní síto.';}}
+  else if(m.damage>1.5||m.loss>1){lvl='warn';
+    if(m.damage>1.5&&m.damage>=m.loss){t='Poškození roste';s=m.r>1?'Zkuste ubrat otáčky o pár desítek.':'Zkuste rozšířit mezeru koše.';}
+    else{t='Ztráty rostou';s=m.sep>m.unthr?'Ubrat na zatížení pomůže separaci.':(m.r<1?'Zkuste přidat otáčky.':'Zkuste zúžit mezeru koše.');}}
+  else if(state.moist-c.mOpt>6){lvl='warn';t='Zrno je vlhké';s='Vlhké klasy se mlátí hůř, počítejte s vyššími ztrátami.';}
+  const el=$('status');el.className='status'+(lvl==='good'?'':' '+lvl);
+  el.querySelector('.st-title').textContent=t;el.querySelector('.st-text').textContent=s;
+}
+function syncInputs(){
+  ['rpm','clr','feed','moist','fan','up','low','slope'].forEach(k=>$(k).value=state[k]);
+  $('o-slope').textContent=state.slope===0?'rovina':(state.slope>0?'+'+state.slope+'° do kopce':'−'+(-state.slope)+'° z kopce');
+  $('o-rpm').textContent=state.rpm+' ot/min';
+  $('o-v').textContent='Obvodová rychlost rotoru '+fmt(vTip(state.rpm))+' m/s';
+  $('o-clr').textContent=state.clr+' mm';$('o-feed').textContent=state.feed+' t/h';$('o-moist').textContent=state.moist+' %';
+  $('o-fan').textContent=state.fan+' ot/min';$('o-air').textContent='Proud vzduchu '+Math.round(cur.f*100)+' % doporučeného';
+  $('o-up').textContent=state.up+' mm';$('o-low').textContent=state.low+' mm';
+  const c=CROPS[state.crop];$('calFan').value=c.fan;$('calUp').value=c.up;$('calLow').value=c.low;$('calRpm').value=c.ref;$('calClr').value=c.refC;$('calDia').value=MACH.dia;$('calCap').value=MACH.cap;
+}
+function apply(){
+  cur=model(state);optN=optimumRpm(state);syncInputs();
+  setMetric('m-damage',cur.damage,1.5,3);setMetric('m-unthr',cur.unthr,.6,1.2);setMetric('m-sep',cur.sep,.6,1.2);setMetric('m-loss',cur.loss,1,2);setMetric('m-clean',cur.clean,.45,.9);setMetric('m-imp',cur.imp,2,4);setMetric('m-tail',cur.tails,22,35);
+  $('s-damage').textContent='z toho domlácením vratky '+fmt(cur.dmgRet,2)+' %';
+  $('s-sep').textContent='z toho kvůli vratce '+fmt(cur.sepRet,2)+' %';
+  $('s-tail').textContent='přes konec horního síta '+fmt(cur.tailsU)+' %, nepropadlo dolním '+fmt(cur.tailsL)+' %';
+  $('m-opt').querySelector('span').textContent=optN;
+  status();drawChart();if(scene3d)scene3d.onParams();
+}
+document.querySelectorAll('input[type=range]').forEach(inp=>inp.addEventListener('input',()=>{state[inp.dataset.k]=+inp.value;apply();}));
+document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;state[k]=clamp(state[k]+(+b.dataset.d),...LIM[k]);apply();}));
+document.querySelectorAll('.crops button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.crops button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));
+  state.crop=b.dataset.crop;const c=CROPS[state.crop];state.clr=c.refC;state.moist=c.mOpt;state.fan=c.fan;state.up=c.up;state.low=c.low;state.rpm=optimumRpm(state);
+  if(scene3d)scene3d.reset();apply();
+}));
+$('bOpt').addEventListener('click',()=>{const c0=CROPS[state.crop];state.clr=c0.refC;state.fan=c0.fan;state.up=c0.up;state.low=c0.low;state.rpm=optimumRpm(state);apply();});
+$('bPause').addEventListener('click',()=>{state.paused=!state.paused;$('bPause').textContent=state.paused?'Spustit':'Pozastavit';});
+$('bTags').addEventListener('click',e=>{const t=$('tags'),on=t.style.visibility==='hidden';t.style.visibility=on?'visible':'hidden';e.currentTarget.setAttribute('aria-pressed',on?'true':'false');});
+function calNum(id,lo,hi,fallback){const v=parseFloat($(id).value);return isFinite(v)?clamp(v,lo,hi):fallback;}
+['calRpm','calClr','calDia','calCap','calFan','calUp','calLow'].forEach(id=>$(id).addEventListener('change',()=>{
+  const c=CROPS[state.crop];
+  c.fan=calNum('calFan',300,1600,c.fan);c.up=calNum('calUp',1,25,c.up);c.low=calNum('calLow',1,20,c.low);
+  c.ref=calNum('calRpm',150,1500,c.ref);c.refC=calNum('calClr',2,60,c.refC);
+  MACH.dia=calNum('calDia',400,1000,MACH.dia);MACH.cap=calNum('calCap',5,120,MACH.cap);
+  apply();
+}));
+
+/* ================= chart ================= */
+const chart=$('chart'),cctx=chart.getContext('2d');
+function drawChart(){
+  if(!cur)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=chart.clientWidth,h=chart.clientHeight;
+  chart.width=Math.round(w*dpr);chart.height=Math.round(h*dpr);
+  const x=cctx;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const L=46,R=12,T=14,B=44,pw=w-L-R,ph=h-T-B,n0=LIM.rpm[0],n1=LIM.rpm[1],yM=8;
+  const X=n=>L+(n-n0)/(n1-n0)*pw,Y=v=>T+ph-Math.min(v,yM*1.05)/yM*ph;
+  const pts=[];let minS=Infinity;
+  for(let n=n0;n<=n1;n+=5){const m=model({...state,rpm:n});const s=m.damage+m.loss;pts.push([n,m.damage,m.loss,s]);if(s<minS)minS=s;}
+  x.fillStyle=col.good;x.globalAlpha=.14;let bs=null;
+  pts.forEach((p,i)=>{const ok=p[3]<=minS*1.3;if(ok&&bs===null)bs=p[0];if(bs!==null&&(!ok||i===pts.length-1)){x.fillRect(X(bs),T,X(p[0])-X(bs),ph);bs=null;}});
+  x.globalAlpha=1;x.strokeStyle=col.line;x.lineWidth=1;x.fillStyle=col.muted;x.font='13px Barlow, system-ui, sans-serif';x.textAlign='right';x.textBaseline='middle';
+  for(let v=0;v<=yM;v+=2){x.beginPath();x.moveTo(L,Y(v)+.5);x.lineTo(L+pw,Y(v)+.5);x.stroke();x.fillText(v+' %',L-6,Y(v));}
+  x.textAlign='center';x.textBaseline='top';const st=w<560?200:100;
+  for(let n=Math.ceil(n0/st)*st;n<=n1;n+=st)x.fillText(n,X(n),T+ph+6);
+  x.fillText('Otáčky rotoru (ot/min)',L+pw/2,T+ph+24);
+  const line=(i,c,d)=>{x.strokeStyle=c;x.lineWidth=2.5;x.setLineDash(d||[]);x.beginPath();pts.forEach((p,k)=>{k?x.lineTo(X(p[0]),Y(p[i])):x.moveTo(X(p[0]),Y(p[i]));});x.stroke();x.setLineDash([]);};
+  x.save();x.beginPath();x.rect(L,T,pw,ph);x.clip();
+  line(3,col.muted,[5,4]);line(1,col.warn);line(2,col.air);
+  const cx=X(state.rpm);x.strokeStyle=col.accent;x.lineWidth=2;x.beginPath();x.moveTo(cx,T);x.lineTo(cx,T+ph);x.stroke();
+  [[cur.damage,col.warn],[cur.loss,col.air]].forEach(([v,c])=>{x.fillStyle=c;x.strokeStyle=col.surface;x.lineWidth=2;x.beginPath();x.arc(cx,Y(v),5,0,Math.PI*2);x.fill();x.stroke();});
+  x.restore();
+}
+
+/* ================= 3D ================= */
+let scene3d=null;
+function build3D(){
+  if(typeof THREE==='undefined')throw new Error('three missing');
+  const host=$('view');
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  renderer.setClearColor(0x000000,0);
+  host.appendChild(renderer.domElement);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(38,1,0.05,100);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x5a6058,0.85));
+  const d1=new THREE.DirectionalLight(0xffffff,0.85);d1.position.set(3,6,5);scene.add(d1);
+  const d2=new THREE.DirectionalLight(0xdfe8ff,0.35);d2.position.set(-5,2,-4);scene.add(d2);
+
+  const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,metalness:.35,roughness:.5},o));
+  const steel=M(0xa3aab1),steelDark=M(0x59616a,{roughness:.6}),rotorMat=M(0x737c86,{metalness:.45,roughness:.38,side:THREE.DoubleSide});
+  const frameMat=M(0x2c5e27,{roughness:.55});
+  const glass=new THREE.MeshStandardMaterial({color:0xc6d8e4,transparent:true,opacity:.14,metalness:0,roughness:.1,side:THREE.DoubleSide,depthWrite:false});
+  const glassEdge=new THREE.LineBasicMaterial({color:0x7d8a96,transparent:true,opacity:.6});
+  const add=(geo,mat,x=0,y=0,z=0,parent=scene)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);parent.add(m);return m;};
+  const R0=0.30,RB=0.365,RH=0.48,XA=-2.6,XT0=-2.0,XT1=0.2,XS1=1.75,XE=2.1;
+  // whole rotor assembly inclined (rear up), same angle as the auger bed
+  const RANG=10*Math.PI/180,cR=Math.cos(RANG),sR=Math.sin(RANG);
+  const rotorFrame=new THREE.Group();rotorFrame.rotation.z=RANG;scene.add(rotorFrame);
+  const L2W=(x,y,z,o=new THREE.Vector3())=>o.set(x*cR-y*sR,x*sR+y*cR,z);
+
+  /* --- rotor --- */
+  const rotG=new THREE.Group();rotorFrame.add(rotG);
+  const core=new THREE.CylinderGeometry(R0,R0,XE-XT0+0.05,40);core.rotateZ(Math.PI/2);add(core,rotorMat,(XE+XT0)/2,0,0,rotG);
+  const cone=new THREE.CylinderGeometry(0.11,R0,XT0-XA,40);cone.rotateZ(Math.PI/2);add(cone,rotorMat,(XA+XT0)/2,0,0,rotG);
+  class Helix extends THREE.Curve{constructor(ph){super();this.ph=ph;}getPoint(t,o=new THREE.Vector3()){const r=0.13+(RB+0.03-0.13)*t,a=this.ph+t*Math.PI*2.2;return o.set(XA-0.05+t*(XT0-XA+0.1),r*Math.sin(a),r*Math.cos(a));}}
+  [0,Math.PI].forEach(ph=>add(new THREE.TubeGeometry(new Helix(ph),80,0.022,6),steel,0,0,0,rotG));
+  const barGeo=new THREE.BoxGeometry(0.24,0.065,0.05);
+  for(let j=0;j<12;j++)for(let k=0;k<4;k++){const a=k*Math.PI/2+j*0.42,x=XT0+0.1+j*0.18;
+    const m=add(barGeo,steelDark,x,(R0+0.032)*Math.sin(a),(R0+0.032)*Math.cos(a),rotG);m.rotation.set(Math.PI/2-a,0,0);m.rotateX(0);m.rotateY(0.35);}
+  const tineGeo=new THREE.CylinderGeometry(0.014,0.018,0.075,6);
+  for(let j=0;j<18;j++)for(let k=0;k<3;k++){const a=k*2*Math.PI/3+j*0.5,x=XT1+0.1+j*0.125;
+    const m=add(tineGeo,steelDark,x,(R0+0.035)*Math.sin(a),(R0+0.035)*Math.cos(a),rotG);m.rotation.set(Math.PI/2-a,0,0);}
+
+  /* --- housing top (glass) --- */
+  const coverG=new THREE.Group();rotorFrame.add(coverG);
+  const shell=new THREE.CylinderGeometry(RH,RH,XE-XA+0.2,48,1,true,0,Math.PI);shell.rotateZ(Math.PI/2);add(shell,glass,(XE+XA)/2,0,0,coverG);
+  for(let x=XA;x<=XE+0.05;x+=0.62){const t=new THREE.TorusGeometry(RH,0.014,6,40,Math.PI);t.rotateY(Math.PI/2);add(t,frameMat,x,0,0,coverG);}
+  [-1,1].forEach(s=>{const g=new THREE.CylinderGeometry(0.014,0.014,XE-XA+0.2,6);g.rotateZ(Math.PI/2);add(g,frameMat,(XE+XA)/2,0,s*RH,coverG);});
+
+  /* --- concave (unit radius, scaled) --- */
+  const concG=new THREE.Group();rotorFrame.add(concG);
+  const arcStart=Math.PI+0.32,arcLen=Math.PI-0.64;
+  function arc(tube){const g=new THREE.TorusGeometry(1,tube,5,36,arcLen);g.rotateZ(arcStart);g.rotateY(Math.PI/2);return g;}
+  const aT=arc(0.028),aS=arc(0.045);
+  for(let x=XT0;x<=XT1;x+=0.07)add(aT,steel,x,0,0,concG);
+  for(let x=XT1+0.04;x<=XS1;x+=0.16)add(aS,steel,x,0,0,concG);
+  for(let t=arcStart;t<=arcStart+arcLen+0.01;t+=arcLen/6){
+    const g=new THREE.CylinderGeometry(0.03,0.03,XS1-XT0,6);g.rotateZ(Math.PI/2);
+    add(g,steelDark,(XS1+XT0)/2,Math.sin(t),-Math.cos(t),concG);}
+  [arcStart,arcStart+arcLen].forEach(t=>{const g=new THREE.BoxGeometry(XS1-XT0,0.06,0.12);add(g,frameMat,(XS1+XT0)/2,Math.sin(t),-Math.cos(t),concG);});
+  const concR=()=>RB+0.006+state.clr/1000*1.6;
+
+  const FA=new THREE.Vector3(XA-0.6,-0.3,0),FB=new THREE.Vector3(XA,0,0),fAng=0;
+
+  /* --- cleaning shoe --- */
+  // layout (x along machine, + = rearward)
+  // auger bed parallel to the rotor (same incline), under the threshing section
+  const ABANG=RANG,BED0=L2W(XT0-0.05,-0.62,0),BED1=L2W(XT1+0.1,-0.62,0);
+  const ABX0=BED0.x,ABY0=BED0.y,ABX1=BED1.x,ABL=BED0.distanceTo(BED1),LANES=[-0.4,-0.24,-0.08,0.08,0.24,0.4];
+  const abY=x=>ABY0+(x-ABX0)*Math.tan(ABANG);
+  const RPX0=0.95,RPX1=2.0,RPS=0.2,PSX0=0.3,PSX1=1.0;
+  const SX0=1.0,SX1=3.4,LX0=1.1,LX1=2.95,AUGX=0.7,TAILX=3.2,AUGY=-1.78,TAILY=-1.66,ELZ=-0.72,ELTOP=1.85;
+  const PANY=AUGY+0.06,SL1=0.05,SL2=0.045,SA=0.022,SZ=0.56;
+  const rpY=x=>-0.62+(x-RPX0)*RPS,psY=x=>-0.95+(x-PSX0)*0.04;
+  const chafY=x=>-1.06+(x-SX0)*SL1,lowY=x=>-1.31+(x-LX0)*SL2,panY=x=>AUGY+0.1+Math.abs(x-AUGX)*0.06;
+  const tailPanY=x=>TAILY+0.06+Math.max(Math.abs(x-TAILX),0.08)*0.4;
+  const tmp=new THREE.Object3D();
+  const lightSteel=M(0xc4cad0,{metalness:.5,roughness:.3});
+  const panMat=M(0x3d7a35,{transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide});
+  function seg(x0,y0,x1,y1,mat,th=0.012,w=0.94,parent=scene){const p=add(new THREE.BoxGeometry(Math.hypot(x1-x0,y1-y0),th,w),mat,(x0+x1)/2,(y0+y1)/2,0,parent);p.rotation.z=Math.atan2(y1-y0,x1-x0);return p;}
+  const chafG=new THREE.Group(),lowG=new THREE.Group();scene.add(chafG);scene.add(lowG);
+  function rails(g,x0,x1,yf,h,sl){const ang=Math.atan(sl),L=(x1-x0)/Math.cos(ang),mx=(x0+x1)/2,my=yf(mx);
+    [-1,1].forEach(s=>{const b=add(new THREE.BoxGeometry(L,h,0.03),frameMat,mx,my,s*0.5,g);b.rotation.z=ang;
+      const lip=add(new THREE.BoxGeometry(L,0.014,0.07),frameMat,mx,my-h/2+0.007,s*0.475,g);lip.rotation.z=ang;
+      const top=add(new THREE.BoxGeometry(L,0.014,0.07),frameMat,mx,my+h/2-0.007,s*0.475,g);top.rotation.z=ang;
+      for(let x=x0+0.2;x<x1-0.1;x+=0.4)add(new THREE.CylinderGeometry(0.011,0.011,0.012,10).rotateX(Math.PI/2),lightSteel,x,yf(x),s*0.517,g);});
+    [x0,x1].forEach(x=>add(new THREE.BoxGeometry(0.035,h*0.7,1.0),frameMat,x,yf(x),0,g));}
+  rails(chafG,SX0,SX1,chafY,0.12,SL1);rails(lowG,LX0,LX1,lowY,0.09,SL2);rails(chafG,PSX0,PSX1,psY,0.1,0.04);
+  // adjustable louvres: upper (chaffer) and lower sieve; fixed louvres on the pre-sieve
+  const nU=Math.floor((SX1-SX0-0.06)/0.028),lvU=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.042,0.94),steel,nU);chafG.add(lvU);
+  const nLo=Math.floor((LX1-LX0-0.06)/0.022),lvL=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.032,0.94),lightSteel,nLo);lowG.add(lvL);
+  {const n=Math.floor((PSX1-PSX0-0.06)/0.028),lv=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.04,0.94),steel,n);
+   for(let i=0;i<n;i++){const x=PSX0+0.04+i*0.028;tmp.position.set(x,psY(x)+0.004,0);tmp.rotation.set(0,0,0.55-Math.PI/2);tmp.updateMatrix();lv.setMatrixAt(i,tmp.matrix);}chafG.add(lv);
+   for(let z=-0.44;z<=0.44;z+=0.045){const f=add(new THREE.CylinderGeometry(0.005,0.005,0.16,5).rotateZ(Math.PI/2),steel,PSX1+0.06,psY(PSX1)+0.005,z,chafG);f.rotation.z=-0.1;}}
+  function setLouvers(){
+    const aU=Math.asin(clamp(state.up/28,0,0.95)),aL=Math.asin(clamp(state.low/22,0,0.95));
+    for(let i=0;i<nU;i++){const x=SX0+0.04+i*0.028;tmp.position.set(x,chafY(x)+0.004,0);tmp.rotation.set(0,0,aU-Math.PI/2+Math.atan(SL1));tmp.scale.set(1,1,1);tmp.updateMatrix();lvU.setMatrixAt(i,tmp.matrix);}
+    for(let i=0;i<nLo;i++){const x=LX0+0.04+i*0.022;tmp.position.set(x,lowY(x)+0.003,0);tmp.rotation.set(0,0,aL-Math.PI/2+Math.atan(SL2));tmp.scale.set(1,1,1);tmp.updateMatrix();lvL.setMatrixAt(i,tmp.matrix);}
+    lvU.instanceMatrix.needsUpdate=true;lvL.instanceMatrix.needsUpdate=true;}
+  setLouvers();
+  // return pan under the separation section (moves with the shoe, conveys forward onto the pre-sieve)
+  {const n=10,w=(RPX1-RPX0)/n;for(let i=0;i<n;i++){const x0=RPX0+i*w;seg(x0,rpY(x0)-0.012,x0+w,rpY(x0+w)+0.006,M(0x3b7a32),0.012,0.94,chafG);}
+   [-1,1].forEach(s=>{const b=add(new THREE.BoxGeometry(RPX1-RPX0,0.12,0.025),frameMat,(RPX0+RPX1)/2,rpY((RPX0+RPX1)/2)+0.04,s*0.48,chafG);b.rotation.z=Math.atan(RPS);});
+   add(new THREE.BoxGeometry(0.025,0.12,0.96),frameMat,RPX1,rpY(RPX1)+0.04,0,chafG);}
+  // auger bed under the threshing section, inclined ~20 deg, all augers turning the same way (convey rearward onto the pre-sieve)
+  const bedG=new THREE.Group();bedG.position.set(ABX0,ABY0,0);bedG.rotation.z=ABANG;scene.add(bedG);
+  class AugX extends THREE.Curve{getPoint(t,o=new THREE.Vector3()){const a=t*Math.PI*2*ABL*6;return o.set(t*ABL,0.058*Math.cos(a),0.058*Math.sin(a));}}
+  const augHelix=new THREE.TubeGeometry(new AugX(),Math.round(ABL*140),0.01,5);
+  const augShaft=new THREE.CylinderGeometry(0.018,0.018,ABL,8).rotateZ(Math.PI/2);
+  const bedTrough=new THREE.CylinderGeometry(0.08,0.08,ABL,20,1,true,Math.PI,Math.PI).rotateZ(Math.PI/2);
+  const bedMat=M(0x2c5e27,{side:THREE.DoubleSide});
+  const bedAugers=LANES.map(z=>{add(bedTrough,bedMat,ABL/2,0,z,bedG);
+    const g=new THREE.Group();g.position.set(0,0,z);bedG.add(g);add(augHelix,steel,0,0,0,g);add(augShaft,steelDark,ABL/2,0,0,g);return g;});
+  [-1,1].forEach(s=>add(new THREE.BoxGeometry(ABL,0.16,0.025),frameMat,ABL/2,0.02,s*0.5,bedG));
+  add(new THREE.BoxGeometry(0.025,0.16,1.0),frameMat,0,0.02,0,bedG);
+  // rockers (balanced: chaffer up, sieve down), hangers and eccentric drive
+  const linkGeo=new THREE.BoxGeometry(0.042,1,0.022);
+  function pivotDisc(r){const g=new THREE.Group();add(new THREE.CylinderGeometry(r,r,0.022,24).rotateX(Math.PI/2),lightSteel,0,0,0,g);
+    add(new THREE.TorusGeometry(r,0.007,6,24),steelDark,0,0,0.011,g);add(new THREE.CylinderGeometry(r*0.28,r*0.28,0.04,10).rotateX(Math.PI/2),steelDark,0,0,0,g);scene.add(g);return g;}
+  const links=[];
+  [-1,1].forEach(s=>{
+    [1.45,2.8].forEach(x=>links.push({type:'rock',x,z:s*SZ,bar:add(linkGeo,steel,0,0,s*SZ),d:[pivotDisc(0.045),pivotDisc(0.055),pivotDisc(0.045)]}));
+    [[1.1,-0.22],[3.3,-0.22]].forEach(([x,o])=>links.push({type:'hang',x,o,z:s*SZ,bar:add(linkGeo,steel,0,0,s*SZ),d:[pivotDisc(0.04),pivotDisc(0.05)]}));
+  });
+  const crank={c:new THREE.Vector3(0.88,-1.56,SZ+0.02),disc:pivotDisc(0.085),pin:pivotDisc(0.03),bar:add(new THREE.BoxGeometry(0.05,1,0.022),steel,0,0,SZ+0.03)};
+  function setBar(m,ax,ay,bx,by){m.position.x=(ax+bx)/2;m.position.y=(ay+by)/2;m.scale.y=Math.hypot(bx-ax,by-ay);m.rotation.z=Math.atan2(by-ay,bx-ax)-Math.PI/2;}
+  // cross-flow fan under the auger bed
+  const FAN={x:-1.0,y:-1.52};
+  const fanG=new THREE.Group();fanG.position.set(FAN.x,FAN.y,0);scene.add(fanG);
+  for(let k=0;k<18;k++){const a=k*Math.PI*2/18;
+    const b1=add(new THREE.BoxGeometry(0.01,0.075,0.92),steel,Math.cos(a)*0.2,Math.sin(a)*0.2,0,fanG);b1.rotation.z=a+0.55;
+    const b2=add(new THREE.BoxGeometry(0.01,0.05,0.92),steel,Math.cos(a+0.17)*0.25,Math.sin(a+0.17)*0.25,0,fanG);b2.rotation.z=a+1.1;}
+  [-0.465,0.465].forEach(z=>{add(new THREE.TorusGeometry(0.27,0.012,6,40),frameMat,0,0,z,fanG);
+    for(let k=0;k<5;k++){const sp=add(new THREE.BoxGeometry(0.27,0.025,0.012),frameMat,0,0,z,fanG);sp.rotation.z=k*Math.PI*2/5;sp.position.x=Math.cos(k*Math.PI*2/5)*0.135;sp.position.y=Math.sin(k*Math.PI*2/5)*0.135;}});
+  add(new THREE.CylinderGeometry(0.05,0.05,1.0,14).rotateX(Math.PI/2),steelDark,0,0,0,fanG);
+  {const h=new THREE.CylinderGeometry(0.34,0.34,0.95,36,1,true,Math.PI/2+0.65,4.6);h.rotateX(Math.PI/2);add(h,M(0x2c5e27,{side:THREE.DoubleSide}),FAN.x,FAN.y,0);
+   seg(FAN.x+0.2,FAN.y-0.3,0.35,-1.62,frameMat,0.02,0.95);
+   seg(FAN.x+0.22,FAN.y+0.28,FAN.x+0.75,FAN.y+0.2,frameMat,0.02,0.95);
+   [-1,1].forEach(s=>add(new THREE.CylinderGeometry(0.34,0.34,0.01,36).rotateX(Math.PI/2),new THREE.MeshStandardMaterial({color:0x2c5e27,transparent:true,opacity:.22,depthWrite:false,side:THREE.DoubleSide}),FAN.x,FAN.y,s*0.48));}
+  // clean grain pan and tailings pan
+  seg(AUGX+0.1,panY(AUGX+0.1),LX1-0.1,panY(LX1-0.1),panMat);seg(AUGX-0.1,panY(AUGX-0.1),AUGX-0.35,panY(AUGX-0.35),panMat);
+  seg(LX1-0.08,tailPanY(LX1-0.08),TAILX-0.08,tailPanY(TAILX-0.08),panMat);seg(TAILX+0.08,tailPanY(TAILX+0.08),4.0,tailPanY(4.0),panMat);
+  // cross augers (clean grain, tailings)
+  class AugH extends THREE.Curve{constructor(z0,z1){super();this.z0=z0;this.z1=z1;}getPoint(t,o=new THREE.Vector3()){const a=t*Math.PI*2*Math.abs(this.z1-this.z0)*7;return o.set(0.075*Math.cos(a),0.075*Math.sin(a),this.z0+t*(this.z1-this.z0));}}
+  function auger(x,y,z0,z1){
+    const len=Math.abs(z1-z0),zc=(z0+z1)/2;
+    const tr=new THREE.CylinderGeometry(0.11,0.11,len,24,1,true,-Math.PI/2-0.35,Math.PI+0.7);tr.rotateX(Math.PI/2);add(tr,M(0x2c5e27,{side:THREE.DoubleSide}),x,y,zc);
+    const g=new THREE.Group();g.position.set(x,y,0);scene.add(g);
+    add(new THREE.TubeGeometry(new AugH(z0,z1),Math.round(len*120),0.012,5),steel,0,0,0,g);
+    add(new THREE.CylinderGeometry(0.022,0.022,len,8).rotateX(Math.PI/2),steelDark,0,0,zc,g);
+    const end=Math.max(z0,z1)+0.01;add(new THREE.CylinderGeometry(0.095,0.095,0.012,28).rotateX(Math.PI/2),lightSteel,0,0,end,g);
+    add(new THREE.TorusGeometry(0.095,0.008,6,28),steelDark,0,0,end+0.006,g);
+    for(let k=0;k<3;k++){const sp=add(new THREE.BoxGeometry(0.09,0.012,0.006),steelDark,0,0,end+0.008,g);sp.rotation.z=k*Math.PI/3;}
+    return g;}
+  const augG=auger(AUGX,AUGY,0.55,ELZ),tailG=auger(TAILX,TAILY,0.55,-0.55);
+  // tailings return to the rotor
+  const retCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(TAILX,TAILY,-0.62),new THREE.Vector3(TAILX+0.05,-0.7,-0.76),L2W(XE+0.3,0.62,-0.72),
+    L2W(0.5,0.64,-0.68),L2W(-1.4,0.62,-0.62),L2W(XA+0.15,0.12,-0.2)]);
+  const retLen=retCurve.getLength();
+  function retTex(){const c=document.createElement('canvas');c.width=128;c.height=8;const g=c.getContext('2d');g.fillStyle='rgba(140,124,240,.25)';g.fillRect(0,0,128,8);
+    g.fillStyle='rgba(140,124,240,1)';for(let i=0;i<2;i++){const x=i*64;g.beginPath();g.moveTo(x+10,0);g.lineTo(x+34,4);g.lineTo(x+10,8);g.closePath();g.fill();}
+    const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.repeat.set(Math.round(retLen*3),1);return t;}
+  const retMat=new THREE.MeshBasicMaterial({map:retTex(),transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide});
+  add(new THREE.TubeGeometry(retCurve,140,0.045,10),retMat);
+  // airflow streamlines from the fan rearward through pre-sieve and sieves
+  function airTex(){const c=document.createElement('canvas');c.width=256;c.height=4;const g=c.getContext('2d');
+    for(let i=0;i<4;i++){const x0=i*64,gr=g.createLinearGradient(x0,0,x0+48,0);gr.addColorStop(0,'rgba(80,220,255,0)');gr.addColorStop(1,'rgba(150,240,255,1)');g.fillStyle=gr;g.fillRect(x0,0,48,4);}
+    const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.repeat.set(2,1);return t;}
+  const airG=new THREE.Group();scene.add(airG);const airMats=[];
+  const LAY=[
+    [[-1.55,-2.0],[-1.3,-1.86],[-0.7,-1.72],[0.2,-1.6],[1.2,-1.52],[2.2,-1.46],[3.2,-1.38]],
+    [[-1.6,-1.9],[-1.32,-1.74],[-0.7,-1.58],[0.2,-1.36],[1.2,-1.2],[2.3,-1.11],[3.5,-0.98]],
+    [[-1.65,-1.8],[-1.35,-1.62],[-0.7,-1.44],[0.2,-1.1],[0.8,-0.98],[2.0,-0.9],[3.8,-0.72]]];
+  LAY.forEach((pts,li)=>{const mat=new THREE.MeshBasicMaterial({map:airTex(),color:0x5fdcff,transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide});airMats.push(mat);
+    [-0.36,-0.12,0.12,0.36].forEach((z,zi)=>{const j=(zi%2?0.025:-0.02);
+      const curve=new THREE.CatmullRomCurve3(pts.map(([x,y],i)=>new THREE.Vector3(x,y+j*(i>1?1:0),z)));
+      add(new THREE.TubeGeometry(curve,90,0.0065,4),mat,0,0,0,airG);});});
+  let fanAng=0;const airOff=[0,0,0];
+  function shoeAnim(dt){const ff=state.fan/CROPS[state.crop].fan;
+    const s=Math.sin(tsec*14),dx=SA*s;chafG.position.x=dx;lowG.position.x=-dx;
+    for(const L of links){
+      if(L.type==='rock'){const ty=chafY(L.x),by=lowY(L.x),my=(ty+by)/2;setBar(L.bar,L.x-dx,by,L.x+dx,ty);
+        L.d[0].position.set(L.x+dx,ty,L.z+0.015*Math.sign(L.z));L.d[1].position.set(L.x,my,L.z+0.02*Math.sign(L.z));L.d[2].position.set(L.x-dx,by,L.z+0.015*Math.sign(L.z));}
+      else{const ly=chafY(L.x),ux=L.x+L.o,uy=ly+0.34;setBar(L.bar,L.x+dx,ly,ux,uy);
+        L.d[0].position.set(L.x+dx,ly,L.z+0.015*Math.sign(L.z));L.d[1].position.set(ux,uy,L.z+0.015*Math.sign(L.z));}
+    }
+    const a=tsec*14+Math.PI/2,c=crank.c,px=c.x+0.06*Math.cos(a),py=c.y+0.06*Math.sin(a);
+    crank.disc.position.copy(c);crank.disc.rotation.z=a;crank.pin.position.set(px,py,c.z+0.02);
+    const ax=1.2-dx,ay=lowY(1.2);setBar(crank.bar,px,py,ax,ay);
+    fanAng+=dt*9*ff;fanG.rotation.z=fanAng;augG.rotation.z=-tsec*12;tailG.rotation.z=-tsec*12;
+    bedAugers.forEach(g=>g.rotation.x=-tsec*10);
+    retMat.map.offset.x-=dt*0.6;
+    airMats.forEach((m,i)=>{airOff[i]=(airOff[i]+dt*(0.55+i*0.15)*ff)%1;m.map.offset.x=-airOff[i];m.opacity=clamp(0.15+0.75*ff,0.12,1);});
+  }
+  const elH=ELTOP-(PANY-0.15);
+  const TANK={x0:-1.6,x1:1.4,y0:0.72,y1:1.62,z0:-0.62,z1:0.62};
+  const SP0=new THREE.Vector3(AUGX,ELTOP,ELZ),SP1=new THREE.Vector3(0.1,ELTOP,0);
+  // ground
+  const GROUND=-2.3;
+  const grid=new THREE.GridHelper(16,32,0x7f8a80,0x7f8a80);grid.position.y=GROUND;grid.material.transparent=true;grid.material.opacity=.25;scene.add(grid);
+
+  /* --- instanced particles --- */
+  const sph=new THREE.SphereGeometry(1,10,7);
+  const mk=(geo,mat,n)=>{const m=new THREE.InstancedMesh(geo,mat,n);m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.count=0;m.frustumCulled=false;scene.add(m);return m;};
+  const goodMat=M(0xe2a92b,{metalness:0,roughness:.55});
+  const mGood=mk(sph,goodMat,5000);
+  const mDmg=mk(sph,M(0xd23b22,{metalness:0,roughness:.6}),3000);
+  const mRet=mk(sph,M(0x8c7cf0,{metalness:0,roughness:.5}),2000);
+  const mChunk=mk(sph,M(0xa8894a,{metalness:0,roughness:.8}),800);
+  const strawGeo=new THREE.CylinderGeometry(0.008,0.008,1,5);
+  const mStraw=mk(strawGeo,M(0xcdb36d,{metalness:0,roughness:.9}),2500);
+  const earMat=M(0xd2ae5a,{metalness:0,roughness:.7});
+  const mEar=mk(sph,earMat,500);
+  const mChaff=mk(new THREE.BoxGeometry(0.02,0.004,0.02),M(0xd8c98f,{metalness:0,roughness:1}),1200);
+  const mHalo=mk(sph,new THREE.MeshBasicMaterial({color:0xff3b30,transparent:true,opacity:.35,depthWrite:false}),1500);
+
+  let P=[],rot=0,tsec=0,spawnAcc=0,tankFill=0;const counts={good:0,dmg:0,lost:0,imp:0};
+  const rnd=Math.random;
+  function newRP(k,o){const lx0=XA+0.1+rnd()*0.3;return Object.assign({k,st:'rotor',lx:lx0,x:lx0,y:0,z:0,th:rnd()*Math.PI*2,rj:rnd(),spd:0.8+rnd()*0.4,lag:0.5+rnd()*0.25,
+    a1:rnd()*6.28,a2:rnd()*6.28,drop:XT0+0.1+Math.pow(rnd(),1.6)*(XS1-XT0-0.25)},o);}
+  function thresh(){
+    const c=CROPS[state.crop];
+    const pU=Math.min(.85,cur.unthr/100*EXAG),pS=Math.min(.85,cur.sep/100*EXAG),pD=Math.min(.9,cur.dmgBase/100*EXAG);
+    let rem=0;
+    for(let i=0;i<c.kpe;i++){if(rnd()<pU){rem++;continue;}const lost=rnd()<pS;P.push(newRP('kernel',{fate:lost?'lost':'tank',dmg:rnd()<pD}));}
+    if(rem)P.push(newRP('chunk',{fate:'lost',n:rem}));
+    for(let i=0;i<2;i++)P.push(newRP('chaff',{fate:'chaff'}));
+  }
+  const tv2=new THREE.Vector3();
+  const slopeV=()=>Math.max(0.5,1+0.6*cur.up-0.4*cur.dn);
+  function step(p,dt,ax,om){
+    switch(p.st){
+      case 'ear':{p.u+=dt*p.sp;const t=p.u;p.x=FA.x+(FB.x-FA.x)*t;p.y=FA.y+(FB.y-FA.y)*t-0.08;p.z=p.z0*(1-0.6*t*t);if(t>=1){thresh();return false;}return true;}
+      case 'rotor':{
+        p.lx+=ax*p.spd*dt;p.th+=om*p.lag*dt;
+        const cr=concR(),rad=(p.lx<XT0)?0.15+(RB-0.15)*clamp((p.lx-XA)/(XT0-XA),0,1)+0.03:RB+0.012+p.rj*(cr-RB-0.012);
+        let ly=rad*Math.sin(p.th);const lz=rad*Math.cos(p.th);p.a1+=dt*4;
+        p.front=true;
+        if((p.fate==='tank'||p.fate==='chaff')&&p.lx>=p.drop&&(Math.sin(p.th)<-0.55||p.lx>XS1-0.05)){
+          ly=Math.min(ly,-(cr+0.04)*0.8);L2W(p.lx,ly,lz,tv2);p.x=tv2.x;p.y=tv2.y;p.z=lz;
+          p.st='fall';p.vx=ax*0.15;p.vy=-0.4;p.vz=lz*0.5;return true;}
+        L2W(p.lx,ly,lz,tv2);p.x=tv2.x;p.y=tv2.y;p.z=lz;
+        if(p.lx>=XE){const v=2.3+rnd()*1.2;p.st='exit';p.vx=v*cR;p.vy=v*sR-0.2+rnd()*0.8;p.vz=(rnd()-.5)*1.2;p.va=(rnd()-.5)*10;
+          if(p.fate==='lost')counts.lost+=p.k==='chunk'?p.n:1;}
+        return true;}
+      case 'fall':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.z=clamp(p.z,-0.42,0.42);
+        if(p.x<ABX1&&p.y<=abY(p.x)+0.05){p.st='abed';p.y=abY(p.x)+0.05;p.lane=LANES.reduce((b,z)=>Math.abs(z-p.z)<Math.abs(b-p.z)?z:b,LANES[0])+(rnd()-.5)*0.06;return true;}
+        if(p.x>=RPX0&&p.y<=rpY(p.x)+0.015){p.st='rpan';p.y=rpY(p.x)+0.015;return true;}
+        if(p.y<-0.7){p.st='pfall';}
+        return true;}
+      case 'abed':{p.x+=0.7*Math.cos(ABANG)*dt;p.z+=(p.lane-p.z)*Math.min(1,dt*6);p.y=abY(p.x)+0.05+0.012*Math.sin(p.x*45+p.lane*9);
+        if(p.x>=ABX1){p.st='pfall';p.vx=0.3;p.vy=0;}return true;}
+      case 'rpan':{p.x-=0.8*dt;p.y=rpY(p.x)+0.015+((p.x*10)%1+1)%1*0.01;if(p.x<=RPX0+0.04){p.st='pfall';p.vx=-0.05;p.vy=0;}return true;}
+      case 'pfall':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
+        if(p.y<=psY(p.x)+0.015){
+          const ff=state.fan/CROPS[state.crop].fan;p.x=Math.max(p.x,PSX0+0.03);
+          if(p.k==='chaff'&&rnd()>Math.min(.7,cur.imp/100*EXAG)){p.st='blown';p.vx=(2.2+rnd()*1.2)*ff;p.vy=(0.5+rnd()*0.5)*ff;p.vz=(rnd()-.5)*0.3;}
+          else{p.st='psieve';p.y=psY(p.x)+0.015;p.vx=0.45+rnd()*0.3;}}
+        return true;}
+      case 'psieve':{p.x+=p.vx*slopeV()*dt;p.y=psY(p.x)+0.015+Math.sin(tsec*14)*0.004;if(p.x>=PSX1){p.st='cfall';p.vx=0.25;p.vy=0;}return true;}
+      case 'cfall':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.y<=chafY(p.x)+0.015){p.st='sieve';p.vx=0.35+rnd()*0.4;p.t=0.25+rnd()*0.7;
+          p.cl=p.k==='kernel'&&rnd()<Math.min(.8,cur.clean/100*EXAG);if(p.cl)p.vx=0.9+rnd()*0.4;}return true;}
+      case 'sieve':{
+        if(p.tu===undefined)p.tu=!p.cl&&rnd()<Math.min(.8,cur.tailsU/100);
+        p.x+=p.vx*slopeV()*dt;p.y=chafY(p.x)+0.015+Math.sin(tsec*14)*0.004;p.t-=dt;
+        if(p.cl){if(p.x>=SX1-0.03){const ff=state.fan/CROPS[state.crop].fan;p.st='blown';p.fate='lost';counts.lost++;p.vx=(0.9+rnd()*0.8)*ff;p.vy=(0.3+rnd()*0.3)*ff;p.vz=(rnd()-.5)*0.3;}}
+        else if(p.tu){if(p.x>=SX1-0.03){p.st='tfall';p.vy=0;p.vx=0.15;}}
+        else if(p.t<=0||p.x>LX1-0.15){p.st='fall2';p.vy=-0.2;}
+        return true;}
+      case 'fall2':{p.vy-=6*dt;p.y+=p.vy*dt;const ly=lowY(p.x);if(p.y<=ly+0.012){p.st='sieve2';p.y=ly+0.012;p.t=0.15+rnd()*0.3;}return true;}
+      case 'tailrun':{p.x+=0.6*dt;p.y=lowY(p.x)+0.012;if(p.x>=LX1){p.st='tfall';p.vy=0;p.vx=0.05;}return true;}
+      case 'tfall':{p.vy-=6*dt;p.y+=p.vy*dt;p.x+=p.vx*dt;if(p.y<=tailPanY(p.x)+0.012){p.st='tpan';}return true;}
+      case 'tpan':{const d=TAILX-p.x;p.x+=Math.sign(d)*Math.min(Math.abs(d),0.9*dt);p.y=tailPanY(p.x)+0.012;if(Math.abs(d)<0.03){p.st='taug';p.x=TAILX+(rnd()-.5)*0.06;p.y=TAILY-0.03+rnd()*0.05;}return true;}
+      case 'taug':{p.z-=0.8*dt;if(p.z<=-0.55){p.st='ret';p.u=0;}return true;}
+      case 'ret':{p.u+=dt*1.4/retLen;if(p.u>=1){
+          const lost=p.k==='kernel'&&rnd()<Math.min(.85,cur.sep/100*EXAG);
+          const dmg=p.dmg||(p.k==='kernel'&&rnd()<Math.min(.9,(1.5*cur.dmgBase+0.5)/100*EXAG*2));
+          P.push(newRP(p.k,{fate:p.k==='chaff'?'chaff':(lost?'lost':'tank'),dmg,ret:true}));return false;}
+        retCurve.getPointAt(p.u,tv2);p.x=tv2.x;p.y=tv2.y;p.z=tv2.z;return true;}
+      case 'sieve2':{if(p.tchk===undefined){p.tchk=1;if(rnd()<Math.min(.8,cur.tailsL/100)){p.st='tailrun';return true;}}p.x+=0.3*dt;p.y=lowY(p.x)+0.012;p.t-=dt;if(p.t<=0){p.st='fall3';p.vy=-0.2;}return true;}
+      case 'fall3':{p.vy-=6*dt;p.y+=p.vy*dt;const py=panY(p.x);if(p.y<=py+0.012){p.st='pan';p.y=py+0.012;}return true;}
+      case 'pan':{const d=AUGX-p.x;p.x+=Math.sign(d)*Math.min(Math.abs(d),1.2*dt);p.y=panY(p.x)+0.012;p.z+=(0-p.z)*dt*1.5;if(Math.abs(d)<0.02){p.st='aug';p.x=AUGX+(rnd()-.5)*0.06;p.y=AUGY-0.03+rnd()*0.05;}return true;}
+      case 'aug':{p.z-=0.9*dt;if(p.z<=ELZ+0.03){if(p.k==='chaff')counts.imp++;else if(p.dmg)counts.dmg++;else counts.good++;return false;}return true;}
+      case 'elev':{p.y+=1.7*dt;if(p.y>=ELTOP-0.02){p.st='spout';p.u=0;p.tx=TANK.x0+0.15+rnd()*(TANK.x1-TANK.x0-0.3);p.tz=TANK.z0+0.12+rnd()*(TANK.z1-TANK.z0-0.24);}return true;}
+      case 'spout':{p.u+=dt*1.6;const u=Math.min(p.u,1);p.x=SP0.x+(SP1.x-SP0.x)*u;p.z=SP0.z+(SP1.z-SP0.z)*u;p.y=ELTOP;
+        if(p.u>=1){p.st='drop';p.vx=(p.tx-p.x)*1.4;p.vz=(p.tz-p.z)*1.4;p.vy=0;}return true;}
+      case 'drop':{p.vy-=6*dt;p.x+=p.vx*dt;p.z+=p.vz*dt;p.y+=p.vy*dt;
+        if(p.y<=TANK.y0+fillH()){if(p.k==='chaff')counts.imp++;else if(p.dmg)counts.dmg++;else counts.good++;tankFill++;return false;}return true;}
+      case 'exit':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.a1+=(p.va||0)*dt;
+        if(p.y<=GROUND+0.01){if(p.k==='chaff')return false;p.st='ground';p.y=GROUND+0.012;p.t=4;}return true;}
+      case 'ground':{p.t-=dt;return p.t>0;}
+      case 'blown':{p.vy-=(p.k==='kernel'?4:2.2)*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;if(p.y<=GROUND){if(p.fate==='lost'){p.st='ground';p.y=GROUND+0.012;p.t=4;return true;}return false;}return p.x<8;}
+    }
+    return false;
+  }
+  const fillH=()=>(tankFill%5000)/5000*(TANK.y1-TANK.y0-0.06);
+  let slatU=0,padU=0;
+  function update(dt){
+    tsec+=dt;const om=state.rpm/60*2*Math.PI*VIS;rot+=om*dt;
+    const ax=0.85*(0.55+0.45*Math.min(cur.r,1.6))*(0.75+0.25*Math.min(cur.fr,1.7));
+    spawnAcc+=dt*state.feed*0.15;
+    while(spawnAcc>=1){spawnAcc-=1;if(P.length<6000)thresh();}
+    for(let i=P.length-1;i>=0;i--)if(!step(P[i],dt,ax,om))P.splice(i,1);
+    slatU=(slatU+dt*0.6)%1;padU=(padU+dt*1.7/0.12)%1;
+  }
+  const dm=new THREE.Object3D();
+  const ctr={};
+  function put(mesh,x,y,z,rx,ry,rz,sx,sy,sz){const i=mesh.count;if(i>=mesh.instanceMatrix.count)return;dm.position.set(x,y,z);dm.rotation.set(rx,ry,rz);dm.scale.set(sx,sy,sz);dm.updateMatrix();mesh.setMatrixAt(i,dm.matrix);mesh.count=i+1;}
+  function syncMeshes(){
+    const c=CROPS[state.crop],[kx,ky,kz]=c.ks,[ex,ey,ez]=c.ear;
+    [mGood,mDmg,mRet,mChunk,mStraw,mEar,mChaff,mHalo].forEach(m=>m.count=0);
+    for(const p of P){
+      switch(p.k){
+        case 'ear':put(mEar,p.x,p.y,p.z,0,0,fAng+0.15,ex,ey,ez);break;
+        case 'kernel':{
+          put(p.dmg?mDmg:(p.ret?mRet:mGood),p.x,p.y,p.z,p.a1,p.a2,0,p.dmg?kx*0.8:kx,ky,kz);
+          if(p.fate==='lost'&&(p.st==='exit'||p.st==='ground'||p.st==='blown'))put(mHalo,p.x,p.y,p.z,0,0,0,0.07,0.07,0.07);break;}
+        case 'chunk':put(mChunk,p.x,p.y,p.z,p.a1,p.a2,0,ex*0.7,ey*1.05,ez*1.05);if(p.st==='exit'||p.st==='ground')put(mHalo,p.x,p.y,p.z,0,0,0,0.12,0.12,0.12);break;
+        case 'straw':put(mStraw,p.x,p.y,p.z,p.a1,p.a2,p.st==='ground'?Math.PI/2:0.3,1,p.len,1);break;
+        case 'chaff':put(mChaff,p.x,p.y,p.z,p.a1,p.a2,0,1,1,1);break;
+      }
+    }
+    [mGood,mDmg,mRet,mChunk,mStraw,mEar,mChaff,mHalo].forEach(m=>m.instanceMatrix.needsUpdate=true);
+  }
+
+  /* --- camera --- */
+  const VIEWS={
+    all:{tx:0.4,ty:-0.6,tz:0,r:8.6,th:-0.28,ph:1.25,cut:false},
+    rotor:{tx:-0.9*cR,ty:-0.9*sR,tz:0,r:4.4,th:-0.42,ph:1.28,cut:false},
+    cut:{tx:-0.9*cR,ty:-0.9*sR,tz:0,r:2.3,th:Math.PI/2,ph:Math.PI/2-RANG,cut:true},
+    shoe:{tx:0.9,ty:-0.9,tz:0,r:6.6,th:0.08,ph:1.55,cut:false}
+  };
+  const cam={...VIEWS.all},camT={...VIEWS.all};
+  const cutPlane=new THREE.Plane(new THREE.Vector3(-cR,-sR,0),-0.9),cutPlaneW=cutPlane.clone();
+  let cutOn=false;
+  const capG=new THREE.Group();rotorFrame.add(capG);capG.visible=false;
+  {const d=new THREE.CircleGeometry(R0-0.002,48);d.rotateY(Math.PI/2);add(d,M(0x59616a,{roughness:.7}),-0.905,0,0,capG);}
+  function setView(v){Object.assign(camT,VIEWS[v]);cutOn=VIEWS[v].cut;renderer.clippingPlanes=cutOn?[cutPlaneW]:[];capG.visible=cutOn;
+    document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v?'true':'false'));}
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+  $('bAir').addEventListener('click',e=>{airG.visible=!airG.visible;e.currentTarget.setAttribute('aria-pressed',airG.visible?'true':'false');});
+  $('bCover').addEventListener('click',e=>{coverG.visible=!coverG.visible;e.currentTarget.setAttribute('aria-pressed',coverG.visible?'false':'true');e.currentTarget.textContent=coverG.visible?'Skrýt kryt':'Zobrazit kryt';});
+  const ptr=new Map();let pinch=0;
+  const el=renderer.domElement;
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  el.addEventListener('pointerdown',e=>{el.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY,pan:e.button===2||e.button===1||e.shiftKey});if(ptr.size===2){const [a,b]=[...ptr.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
+  el.addEventListener('pointermove',e=>{const p=ptr.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+    if(ptr.size===1&&p.pan){
+      const k=2*camT.r*Math.tan(camera.fov*Math.PI/360)/Math.max(1,host.clientHeight);
+      const st=Math.sin(camT.th),ct=Math.cos(camT.th),sp=Math.sin(camT.ph),cp=Math.cos(camT.ph);
+      camT.tx+=(-ct*dx-cp*st*dy)*k;camT.ty+=(sp*dy)*k;camT.tz+=(st*dx-cp*ct*dy)*k;
+      cam.tx=camT.tx;cam.ty=camT.ty;cam.tz=camT.tz;}
+    else if(ptr.size===1){camT.th-=dx*0.006;camT.ph=clamp(camT.ph-dy*0.006,0.15,2.95);}
+    else if(ptr.size===2){const [a,b]=[...ptr.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch>0)camT.r=clamp(camT.r*pinch/d,1.2,22);pinch=d;}});
+  const up=e=>{ptr.delete(e.pointerId);pinch=0;};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+  el.addEventListener('wheel',e=>{e.preventDefault();camT.r=clamp(camT.r*Math.exp(e.deltaY*0.0012),1.2,22);},{passive:false});
+
+  /* --- labels --- */
+  const W=(x,y,z)=>L2W(x,y,z).toArray();
+  const tagPos={1:W(XA+0.5,0.46,0.3),2:W(-1.7,-0.46,0.4),3:W(0.9,-0.46,0.4),4:[-0.1,abY(-0.1)+0.08,0.55],5:[1.75,rpY(1.75)+0.06,0.55],6:[FAN.x,FAN.y,0.62],7:[0.65,psY(0.65)+0.06,0.56],8:[2.4,chafY(2.4)+0.06,0.56],9:[2.1,lowY(2.1),0.56],10:[AUGX,AUGY-0.05,0.62],11:[TAILX,TAILY-0.06,0.62],12:W(0.5,0.64,-0.68),13:[4.1,-1.9,0.3]};
+  const tags=[...document.querySelectorAll('.tag')].map(t=>({el:t,v:new THREE.Vector3(...tagPos[t.dataset.n]),n:+t.dataset.n}));
+  const tv=new THREE.Vector3();
+  function placeTags(w,h){
+    for(const t of tags){
+      const show=!cutOn||t.n===1||t.n===2;
+      tv.copy(t.v).applyMatrix4(machineG.matrixWorld).project(camera);
+      if(!show||tv.z>1||tv.z<-1||Math.abs(tv.x)>1.05||Math.abs(tv.y)>1.05){t.el.style.display='none';continue;}
+      t.el.style.display='flex';t.el.style.transform=`translate(${((tv.x+1)/2*w).toFixed(1)}px,${((1-tv.y)/2*h).toFixed(1)}px) translate(-12px,-50%)`;
+    }
+  }
+
+  function resize(){const w=host.clientWidth,h=clamp(w*0.68,360,760);host.style.height=h+'px';renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
+  new ResizeObserver(resize).observe(host.parentElement);resize();
+
+  let last=performance.now();
+  function frame(t){
+    const dt=Math.min(.05,(t-last)/1000);last=t;
+    if(!state.paused){update(dt);}
+    // animated parts
+    machineG.rotation.z+=(-state.slope*Math.PI/180-machineG.rotation.z)*Math.min(1,dt*4);machineG.updateMatrixWorld();
+    if(cutOn)cutPlaneW.copy(cutPlane).applyMatrix4(machineG.matrixWorld);
+    rotG.rotation.x=-rot;shoeAnim(state.paused?0:dt);
+    const s=concR();concG.scale.set(1,s,s);
+    syncMeshes();
+    const k=Math.min(1,dt*5);for(const key of ['tx','ty','tz','r','th','ph'])cam[key]+=(camT[key]-cam[key])*k;
+    camera.position.set(cam.tx+cam.r*Math.sin(cam.ph)*Math.sin(cam.th),cam.ty+cam.r*Math.cos(cam.ph),cam.tz+cam.r*Math.sin(cam.ph)*Math.cos(cam.th));
+    camera.lookAt(cam.tx,cam.ty,cam.tz);
+    renderer.render(scene,camera);
+    placeTags(host.clientWidth,host.clientHeight);
+    requestAnimationFrame(frame);
+  }
+  function onParams(){setLouvers();const c=CROPS[state.crop];goodMat.color.setHex(c.kc);earMat.color.setHex(c.earC);}
+  function resetCounts(){counts.good=counts.dmg=counts.lost=counts.imp=0;tankFill=0;}
+  function reset(){P=[];resetCounts();}
+  // whole machine (and ground) in one group so it can tilt with the terrain slope
+  const machineG=new THREE.Group();scene.children.slice().forEach(c=>{if(!c.isLight)machineG.add(c);});scene.add(machineG);
+  return {start(){for(let i=0;i<200;i++)update(1/30);requestAnimationFrame(frame);},onParams,reset,resetCounts};
+}
+
+/* ================= init ================= */
+readColors();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();apply();});
+new MutationObserver(()=>{readColors();apply();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+new ResizeObserver(()=>drawChart()).observe(chart);
+state.rpm=optimumRpm(state);
+apply();
+if(state.paused)$('bPause').textContent='Spustit';
+try{scene3d=build3D();scene3d.onParams();scene3d.start();}
+catch(e){$('err').style.display='grid';console.error(e);}
+})();
+</script>
+</body>
+</html>
