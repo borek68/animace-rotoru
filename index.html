@@ -63,12 +63,18 @@ h2{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;font-weigh
 .layout .panel{padding:16px}
 @media (max-width:1180px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"view view" "set res"}}
 @media (max-width:760px){.layout{grid-template-columns:1fr;grid-template-areas:"view" "set" "res"}}
+.layout .models button{border-bottom:0!important}
 .layout .crops{width:100%;display:grid;grid-template-columns:1fr 1fr}.layout .crops button{padding:8px 6px;border-bottom:1px solid var(--line)}.layout .crops button:nth-child(2n){border-right:0}.layout .crops button:nth-child(n+3){border-bottom:0}
 .ctl-head output{white-space:nowrap}
 .brand{margin:0 0 10px}.logo-head{display:block;height:46px;width:auto;color:var(--ink)}
 .wm{position:absolute;left:12px;bottom:10px;pointer-events:none;opacity:.9}.logo-wm{display:block;height:24px;width:auto;color:var(--ink)}
 .foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:28px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
 .foot p{margin:0;max-width:80ch}.logo-foot{height:26px;width:auto;color:var(--ink)}
+.toolbar button:disabled{opacity:.45;cursor:not-allowed}
+.tgls{display:flex;flex-direction:column;gap:8px}
+.tgl{font:inherit;font-weight:600;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);text-align:left;cursor:pointer}
+.tgl[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accentInk)}
+.tgl:disabled{opacity:.45;cursor:not-allowed}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px}
 .crops{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:18px;width:max-content;max-width:100%}
 .crops button{font:inherit;font-weight:500;border:0;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer;border-right:1px solid var(--line)}
@@ -121,6 +127,11 @@ summary{cursor:pointer;font-weight:600}
   <div class="layout">
     <section class="panel set">
       <h2>Nastavení</h2>
+      <div class="crops models" role="group" aria-label="Model stroje">
+        <button data-model="700" aria-pressed="true">S7 700</button>
+        <button data-model="800" aria-pressed="false">S7 800</button>
+      </div>
+      <div class="ctl-sub" id="o-model" style="margin:-10px 0 16px"></div>
       <div class="crops" role="group" aria-label="Plodina">
         <button data-crop="psenice" aria-pressed="true">Pšenice</button>
         <button data-crop="jecmen" aria-pressed="false">Ječmen</button>
@@ -197,10 +208,15 @@ summary{cursor:pointer;font-weight:600}
         <div class="tag" data-n="9"><b>9</b><span>Spodní síto</span></div>
         <div class="tag" data-n="10"><b>10</b><span>Zrnový dopravník</span></div>
         <div class="tag" data-n="11"><b>11</b><span>Kláskový dopravník</span></div>
-        <div class="tag" data-n="12"><b>12</b><span>Vratka zpět do rotoru</span></div>
+        <div class="tag" data-n="12"><b>12</b><span>Elevátor vratky do rotoru</span></div>
         <div class="tag" data-n="13"><b>13</b><span>Ztráty za strojem</span></div>
         <div class="tag" data-n="14"><b>A</b><span>Čisté zrno</span></div>
         <div class="tag" data-n="15"><b>B</b><span>Lehké nečistoty</span></div>
+        <div class="tag" data-n="16"><b>K</b><span>Klasňovací plech</span></div>
+        <div class="tag" data-n="17"><b>S</b><span>Krycí plechy separace</span></div>
+        <div class="tag" data-n="18"><b>12</b><span>Elevátor vratky</span></div>
+        <div class="tag" data-n="19"><b>D</b><span>Aktivní domlacovač</span></div>
+        <div class="tag" data-n="20"><b>E</b><span>Dopravník na spádovou desku</span></div>
       </div>
       <div class="toolbar" role="group" aria-label="Pohled">
         <button data-view="all" aria-pressed="true">Celý stroj</button>
@@ -211,6 +227,9 @@ summary{cursor:pointer;font-weight:600}
         <button id="bAir" aria-pressed="true">Proudění vzduchu</button>
         <button id="bTags" aria-pressed="true">Popisky</button>
         <button id="bImp" aria-pressed="false">Nečistoty</button>
+        <button id="tPlate" aria-pressed="false">Klasňovací plech</button>
+        <button id="tPlateL" aria-pressed="false" disabled>Otevřít levé 2/3 plechu</button>
+        <button id="tCovers" aria-pressed="false">Krycí plechy separace</button>
       </div>
       <div class="hint">Levým tlačítkem otáčíte, pravým posouváte, kolečkem přibližujete</div>
       <div class="wm" aria-hidden="true"><svg class="logo-wm" viewBox="37 25 366 87" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="STROM"><defs> <clipPath id="lw-clip-0"> <path clip-rule="nonzero" d="M 86 27 L 99 27 L 99 110 L 86 110 Z M 86 27 "/> </clipPath> <clipPath id="lw-clip-1"> <path clip-rule="nonzero" d="M 87.726562 27.828125 C 87.246094 27.828125 86.859375 28.238281 86.859375 28.746094 L 86.859375 108.355469 C 86.859375 108.859375 87.246094 109.273438 87.726562 109.273438 L 97.21875 109.273438 C 97.699219 109.273438 98.085938 108.859375 98.085938 108.355469 L 98.085938 28.746094 C 98.085938 28.238281 97.699219 27.828125 97.21875 27.828125 Z M 87.726562 27.828125 "/> </clipPath> <linearGradient id="lw-linear-pattern-0" gradientUnits="userSpaceOnUse" x1="0.0000544577" y1="0" x2="1.000032" y2="0" gradientTransform="matrix(11.23018, 0, 0, 11.23018, 86.857322, 68.550281)"> <stop offset="0" stop-color="rgb(21.913147%, 47.340393%, 11.825562%)" stop-opacity="1"/> <stop offset="0.015625" stop-color="rgb(21.963501%, 47.447205%, 11.857605%)" stop-opacity="1"/> <stop offset="0.03125" stop-color="rgb(22.067261%, 47.671509%, 11.92627%)" stop-opacity="1"/> <stop offset="0.046875" stop-color="rgb(22.174072%, 47.901917%, 11.99646%)" stop-opacity="1"/> <stop offset="0.0625" stop-color="rgb(22.28241%, 48.132324%, 12.06665%)" stop-opacity="1"/> <stop offset="0.078125" stop-color="rgb(22.389221%, 48.364258%, 12.136841%)" stop-opacity="1"/> <stop offset="0.09375" stop-color="rgb(22.496033%, 48.596191%, 12.207031%)" stop-opacity="1"/> <stop offset="0.109375" stop-color="rgb(22.60437%, 48.826599%, 12.277222%)" stop-opacity="1"/> <stop offset="0.125" stop-color="rgb(22.711182%, 49.058533%, 12.347412%)" stop-opacity="1"/> <stop offset="0.140625" stop-color="rgb(22.817993%, 49.28894%, 12.417603%)" stop-opacity="1"/> <stop offset="0.15625" stop-color="rgb(22.926331%, 49.520874%, 12.487793%)" stop-opacity="1"/> <stop offset="0.171875" stop-color="rgb(23.033142%, 49.751282%, 12.557983%)" stop-opacity="1"/> <stop offset="0.1875" stop-color="rgb(23.141479%, 49.983215%, 12.628174%)" stop-opacity="1"/> <stop offset="0.203125" stop-color="rgb(23.248291%, 50.215149%, 12.698364%)" stop-opacity="1"/> <stop offset="0.21875" stop-color="rgb(23.355103%, 50.447083%, 12.768555%)" stop-opacity="1"/> <stop offset="0.234375" stop-color="rgb(23.461914%, 50.67749%, 12.838745%)" stop-opacity="1"/> <stop offset="0.25" stop-color="rgb(23.570251%, 50.907898%, 12.908936%)" stop-opacity="1"/> <stop offset="0.265625" stop-color="rgb(23.677063%, 51.139832%, 12.980652%)" stop-opacity="1"/> <stop offset="0.28125" stop-color="rgb(23.7854%, 51.371765%, 13.050842%)" stop-opacity="1"/> <stop offset="0.296875" stop-color="rgb(23.892212%, 51.602173%, 13.121033%)" stop-opacity="1"/> <stop offset="0.3125" stop-color="rgb(23.999023%, 51.832581%, 13.191223%)" stop-opacity="1"/> <stop offset="0.328125" stop-color="rgb(24.107361%, 52.064514%, 13.261414%)" stop-opacity="1"/> <stop offset="0.34375" stop-color="rgb(24.214172%, 52.296448%, 13.331604%)" stop-opacity="1"/> <stop offset="0.359375" stop-color="rgb(24.32251%, 52.526855%, 13.401794%)" stop-opacity="1"/> <stop offset="0.375" stop-color="rgb(24.429321%, 52.758789%, 13.471985%)" stop-opacity="1"/> <stop offset="0.390625" stop-color="rgb(24.536133%, 52.990723%, 13.542175%)" stop-opacity="1"/> <stop offset="0.40625" stop-color="rgb(24.642944%, 53.22113%, 13.612366%)" stop-opacity="1"/> <stop offset="0.421875" stop-color="rgb(24.751282%, 53.451538%, 13.682556%)" stop-opacity="1"/> <stop offset="0.4375" stop-color="rgb(24.858093%, 53.683472%, 13.752747%)" stop-opacity="1"/> <stop offset="0.453125" stop-color="rgb(24.966431%, 53.915405%, 13.822937%)" stop-opacity="1"/> <stop offset="0.46875" stop-color="rgb(25.073242%, 54.145813%, 13.893127%)" stop-opacity="1"/> <stop offset="0.484375" stop-color="rgb(25.180054%, 54.376221%, 13.963318%)" stop-opacity="1"/> <stop offset="0.5" stop-color="rgb(25.288391%, 54.608154%, 14.033508%)" stop-opacity="1"/> <stop offset="0.515625" stop-color="rgb(25.395203%, 54.840088%, 14.103699%)" stop-opacity="1"/> <stop offset="0.53125" stop-color="rgb(25.502014%, 55.072021%, 14.173889%)" stop-opacity="1"/> <stop offset="0.546875" stop-color="rgb(25.610352%, 55.302429%, 14.24408%)" stop-opacity="1"/> <stop offset="0.5625" stop-color="rgb(25.717163%, 55.534363%, 14.31427%)" stop-opacity="1"/> <stop offset="0.578125" stop-color="rgb(25.823975%, 55.764771%, 14.38446%)" stop-opacity="1"/> <stop offset="0.59375" stop-color="rgb(25.932312%, 55.996704%, 14.454651%)" stop-opacity="1"/> <stop offset="0.609375" stop-color="rgb(26.039124%, 56.227112%, 14.526367%)" stop-opacity="1"/> <stop offset="0.625" stop-color="rgb(26.147461%, 56.459045%, 14.596558%)" stop-opacity="1"/> <stop offset="0.640625" stop-color="rgb(26.254272%, 56.690979%, 14.666748%)" stop-opacity="1"/> <stop offset="0.65625" stop-color="rgb(26.361084%, 56.921387%, 14.736938%)" stop-opacity="1"/> <stop offset="0.671875" stop-color="rgb(26.469421%, 57.151794%, 14.807129%)" stop-opacity="1"/> <stop offset="0.6875" stop-color="rgb(26.576233%, 57.383728%, 14.877319%)" stop-opacity="1"/> <stop offset="0.703125" stop-color="rgb(26.683044%, 57.615662%, 14.94751%)" stop-opacity="1"/> <stop offset="0.71875" stop-color="rgb(26.791382%, 57.846069%, 15.0177%)" stop-opacity="1"/> <stop offset="0.734375" stop-color="rgb(26.898193%, 58.078003%, 15.087891%)" stop-opacity="1"/> <stop offset="0.75" stop-color="rgb(27.005005%, 58.308411%, 15.158081%)" stop-opacity="1"/> <stop offset="0.765625" stop-color="rgb(27.113342%, 58.540344%, 15.228271%)" stop-opacity="1"/> <stop offset="0.78125" stop-color="rgb(27.220154%, 58.770752%, 15.298462%)" stop-opacity="1"/> <stop offset="0.796875" stop-color="rgb(27.328491%, 59.002686%, 15.368652%)" stop-opacity="1"/> <stop offset="0.8125" stop-color="rgb(27.435303%, 59.234619%, 15.438843%)" stop-opacity="1"/> <stop offset="0.828125" stop-color="rgb(27.542114%, 59.466553%, 15.509033%)" stop-opacity="1"/> <stop offset="0.84375" stop-color="rgb(27.650452%, 59.69696%, 15.579224%)" stop-opacity="1"/> <stop offset="0.859375" stop-color="rgb(27.757263%, 59.927368%, 15.649414%)" stop-opacity="1"/> <stop offset="0.875" stop-color="rgb(27.864075%, 60.159302%, 15.719604%)" stop-opacity="1"/> <stop offset="0.890625" stop-color="rgb(27.972412%, 60.391235%, 15.789795%)" stop-opacity="1"/> <stop offset="0.90625" stop-color="rgb(28.079224%, 60.621643%, 15.859985%)" stop-opacity="1"/> <stop offset="0.921875" stop-color="rgb(28.186035%, 60.852051%, 15.930176%)" stop-opacity="1"/> <stop offset="0.9375" stop-color="rgb(28.294373%, 61.083984%, 16.000366%)" stop-opacity="1"/> <stop offset="0.953125" stop-color="rgb(28.401184%, 61.315918%, 16.072083%)" stop-opacity="1"/> <stop offset="0.96875" stop-color="rgb(28.509521%, 61.546326%, 16.142273%)" stop-opacity="1"/> <stop offset="0.984375" stop-color="rgb(28.616333%, 61.778259%, 16.212463%)" stop-opacity="1"/> <stop offset="1" stop-color="rgb(28.720093%, 62.001038%, 16.279602%)" stop-opacity="1"/> </linearGradient> <clipPath id="lw-clip-2"> <path clip-rule="nonzero" d="M 39 28 L 76 28 L 76 102 L 39 102 Z M 39 28 "/> </clipPath> <clipPath id="lw-clip-3"> <path clip-rule="nonzero" d="M 73.925781 28.292969 C 54.164062 32.0625 39.335938 46.972656 39.335938 64.703125 C 39.335938 82.433594 54.164062 97.34375 73.925781 101.117188 C 74.816406 101.285156 75.636719 100.570312 75.636719 99.648438 L 75.636719 29.757812 C 75.636719 28.929688 74.972656 28.265625 74.191406 28.265625 C 74.101562 28.265625 74.015625 28.273438 73.925781 28.292969 "/> </clipPath> <linearGradient id="lw-linear-pattern-1" gradientUnits="userSpaceOnUse" x1="0.00000619448" y1="0" x2="0.99998" y2="0" gradientTransform="matrix(36.299764, 0, 0, 36.299764, 39.335965, 64.703827)"> <stop offset="0" stop-color="rgb(21.913147%, 47.340393%, 11.825562%)" stop-opacity="1"/> <stop offset="0.015625" stop-color="rgb(21.963501%, 47.447205%, 11.857605%)" stop-opacity="1"/> <stop offset="0.03125" stop-color="rgb(22.067261%, 47.669983%, 11.92627%)" stop-opacity="1"/> <stop offset="0.046875" stop-color="rgb(22.174072%, 47.901917%, 11.99646%)" stop-opacity="1"/> <stop offset="0.0625" stop-color="rgb(22.28241%, 48.132324%, 12.06665%)" stop-opacity="1"/> <stop offset="0.078125" stop-color="rgb(22.389221%, 48.362732%, 12.136841%)" stop-opacity="1"/> <stop offset="0.09375" stop-color="rgb(22.496033%, 48.594666%, 12.207031%)" stop-opacity="1"/> <stop offset="0.109375" stop-color="rgb(22.602844%, 48.826599%, 12.277222%)" stop-opacity="1"/> <stop offset="0.125" stop-color="rgb(22.711182%, 49.057007%, 12.347412%)" stop-opacity="1"/> <stop offset="0.140625" stop-color="rgb(22.817993%, 49.28894%, 12.417603%)" stop-opacity="1"/> <stop offset="0.15625" stop-color="rgb(22.926331%, 49.520874%, 12.487793%)" stop-opacity="1"/> <stop offset="0.171875" stop-color="rgb(23.033142%, 49.751282%, 12.557983%)" stop-opacity="1"/> <stop offset="0.1875" stop-color="rgb(23.139954%, 49.981689%, 12.628174%)" stop-opacity="1"/> <stop offset="0.203125" stop-color="rgb(23.248291%, 50.213623%, 12.698364%)" stop-opacity="1"/> <stop offset="0.21875" stop-color="rgb(23.355103%, 50.445557%, 12.768555%)" stop-opacity="1"/> <stop offset="0.234375" stop-color="rgb(23.461914%, 50.67749%, 12.838745%)" stop-opacity="1"/> <stop offset="0.25" stop-color="rgb(23.570251%, 50.907898%, 12.908936%)" stop-opacity="1"/> <stop offset="0.265625" stop-color="rgb(23.677063%, 51.138306%, 12.979126%)" stop-opacity="1"/> <stop offset="0.28125" stop-color="rgb(23.783875%, 51.370239%, 13.049316%)" stop-opacity="1"/> <stop offset="0.296875" stop-color="rgb(23.892212%, 51.602173%, 13.121033%)" stop-opacity="1"/> <stop offset="0.3125" stop-color="rgb(23.999023%, 51.832581%, 13.191223%)" stop-opacity="1"/> <stop offset="0.328125" stop-color="rgb(24.107361%, 52.064514%, 13.261414%)" stop-opacity="1"/> <stop offset="0.34375" stop-color="rgb(24.214172%, 52.294922%, 13.331604%)" stop-opacity="1"/> <stop offset="0.359375" stop-color="rgb(24.320984%, 52.526855%, 13.401794%)" stop-opacity="1"/> <stop offset="0.375" stop-color="rgb(24.429321%, 52.757263%, 13.471985%)" stop-opacity="1"/> <stop offset="0.390625" stop-color="rgb(24.536133%, 52.989197%, 13.542175%)" stop-opacity="1"/> <stop offset="0.40625" stop-color="rgb(24.642944%, 53.22113%, 13.612366%)" stop-opacity="1"/> <stop offset="0.421875" stop-color="rgb(24.751282%, 53.451538%, 13.682556%)" stop-opacity="1"/> <stop offset="0.4375" stop-color="rgb(24.858093%, 53.681946%, 13.752747%)" stop-opacity="1"/> <stop offset="0.453125" stop-color="rgb(24.964905%, 53.913879%, 13.822937%)" stop-opacity="1"/> <stop offset="0.46875" stop-color="rgb(25.073242%, 54.145813%, 13.893127%)" stop-opacity="1"/> <stop offset="0.484375" stop-color="rgb(25.180054%, 54.376221%, 13.963318%)" stop-opacity="1"/> <stop offset="0.5" stop-color="rgb(25.288391%, 54.608154%, 14.033508%)" stop-opacity="1"/> <stop offset="0.515625" stop-color="rgb(25.395203%, 54.838562%, 14.103699%)" stop-opacity="1"/> <stop offset="0.53125" stop-color="rgb(25.502014%, 55.070496%, 14.173889%)" stop-opacity="1"/> <stop offset="0.546875" stop-color="rgb(25.610352%, 55.302429%, 14.24408%)" stop-opacity="1"/> <stop offset="0.5625" stop-color="rgb(25.717163%, 55.532837%, 14.31427%)" stop-opacity="1"/> <stop offset="0.578125" stop-color="rgb(25.823975%, 55.764771%, 14.38446%)" stop-opacity="1"/> <stop offset="0.59375" stop-color="rgb(25.932312%, 55.995178%, 14.454651%)" stop-opacity="1"/> <stop offset="0.609375" stop-color="rgb(26.039124%, 56.227112%, 14.524841%)" stop-opacity="1"/> <stop offset="0.625" stop-color="rgb(26.145935%, 56.45752%, 14.595032%)" stop-opacity="1"/> <stop offset="0.640625" stop-color="rgb(26.254272%, 56.689453%, 14.665222%)" stop-opacity="1"/> <stop offset="0.65625" stop-color="rgb(26.361084%, 56.921387%, 14.736938%)" stop-opacity="1"/> <stop offset="0.671875" stop-color="rgb(26.469421%, 57.151794%, 14.807129%)" stop-opacity="1"/> <stop offset="0.6875" stop-color="rgb(26.576233%, 57.382202%, 14.877319%)" stop-opacity="1"/> <stop offset="0.703125" stop-color="rgb(26.683044%, 57.614136%, 14.94751%)" stop-opacity="1"/> <stop offset="0.71875" stop-color="rgb(26.791382%, 57.846069%, 15.0177%)" stop-opacity="1"/> <stop offset="0.734375" stop-color="rgb(26.898193%, 58.076477%, 15.087891%)" stop-opacity="1"/> <stop offset="0.75" stop-color="rgb(27.005005%, 58.308411%, 15.158081%)" stop-opacity="1"/> <stop offset="0.765625" stop-color="rgb(27.113342%, 58.540344%, 15.228271%)" stop-opacity="1"/> <stop offset="0.78125" stop-color="rgb(27.220154%, 58.770752%, 15.298462%)" stop-opacity="1"/> <stop offset="0.796875" stop-color="rgb(27.326965%, 59.002686%, 15.368652%)" stop-opacity="1"/> <stop offset="0.8125" stop-color="rgb(27.435303%, 59.233093%, 15.438843%)" stop-opacity="1"/> <stop offset="0.828125" stop-color="rgb(27.542114%, 59.465027%, 15.509033%)" stop-opacity="1"/> <stop offset="0.84375" stop-color="rgb(27.650452%, 59.69696%, 15.579224%)" stop-opacity="1"/> <stop offset="0.859375" stop-color="rgb(27.757263%, 59.927368%, 15.649414%)" stop-opacity="1"/> <stop offset="0.875" stop-color="rgb(27.864075%, 60.157776%, 15.719604%)" stop-opacity="1"/> <stop offset="0.890625" stop-color="rgb(27.970886%, 60.389709%, 15.789795%)" stop-opacity="1"/> <stop offset="0.90625" stop-color="rgb(28.079224%, 60.621643%, 15.859985%)" stop-opacity="1"/> <stop offset="0.921875" stop-color="rgb(28.186035%, 60.852051%, 15.930176%)" stop-opacity="1"/> <stop offset="0.9375" stop-color="rgb(28.294373%, 61.083984%, 16.000366%)" stop-opacity="1"/> <stop offset="0.953125" stop-color="rgb(28.401184%, 61.314392%, 16.070557%)" stop-opacity="1"/> <stop offset="0.96875" stop-color="rgb(28.507996%, 61.546326%, 16.140747%)" stop-opacity="1"/> <stop offset="0.984375" stop-color="rgb(28.616333%, 61.776733%, 16.210938%)" stop-opacity="1"/> <stop offset="1" stop-color="rgb(28.718567%, 61.999512%, 16.279602%)" stop-opacity="1"/> </linearGradient> <clipPath id="lw-clip-4"> <path clip-rule="nonzero" d="M 109 28 L 146 28 L 146 102 L 109 102 Z M 109 28 "/> </clipPath> <clipPath id="lw-clip-5"> <path clip-rule="nonzero" d="M 109.320312 29.757812 L 109.320312 99.648438 C 109.320312 100.570312 110.136719 101.285156 111.027344 101.117188 C 130.792969 97.34375 145.617188 82.433594 145.617188 64.703125 C 145.617188 46.972656 130.792969 32.0625 111.027344 28.292969 C 110.9375 28.273438 110.851562 28.265625 110.765625 28.265625 C 109.984375 28.265625 109.320312 28.929688 109.320312 29.757812 "/> </clipPath> <linearGradient id="lw-linear-pattern-2" gradientUnits="userSpaceOnUse" x1="-0.0000012763" y1="0" x2="1" y2="0" gradientTransform="matrix(36.299764, 0, 0, 36.299764, 109.318828, 64.703827)"> <stop offset="0" stop-color="rgb(21.913147%, 47.340393%, 11.825562%)" stop-opacity="1"/> <stop offset="0.015625" stop-color="rgb(21.963501%, 47.447205%, 11.857605%)" stop-opacity="1"/> <stop offset="0.03125" stop-color="rgb(22.067261%, 47.669983%, 11.92627%)" stop-opacity="1"/> <stop offset="0.046875" stop-color="rgb(22.174072%, 47.900391%, 11.99646%)" stop-opacity="1"/> <stop offset="0.0625" stop-color="rgb(22.280884%, 48.132324%, 12.06665%)" stop-opacity="1"/> <stop offset="0.078125" stop-color="rgb(22.387695%, 48.362732%, 12.136841%)" stop-opacity="1"/> <stop offset="0.09375" stop-color="rgb(22.496033%, 48.59314%, 12.207031%)" stop-opacity="1"/> <stop offset="0.109375" stop-color="rgb(22.602844%, 48.823547%, 12.277222%)" stop-opacity="1"/> <stop offset="0.125" stop-color="rgb(22.709656%, 49.055481%, 12.347412%)" stop-opacity="1"/> <stop offset="0.140625" stop-color="rgb(22.816467%, 49.285889%, 12.416077%)" stop-opacity="1"/> <stop offset="0.15625" stop-color="rgb(22.924805%, 49.517822%, 12.487793%)" stop-opacity="1"/> <stop offset="0.171875" stop-color="rgb(23.031616%, 49.74823%, 12.557983%)" stop-opacity="1"/> <stop offset="0.1875" stop-color="rgb(23.138428%, 49.978638%, 12.628174%)" stop-opacity="1"/> <stop offset="0.203125" stop-color="rgb(23.246765%, 50.210571%, 12.698364%)" stop-opacity="1"/> <stop offset="0.21875" stop-color="rgb(23.353577%, 50.440979%, 12.767029%)" stop-opacity="1"/> <stop offset="0.234375" stop-color="rgb(23.460388%, 50.672913%, 12.838745%)" stop-opacity="1"/> <stop offset="0.25" stop-color="rgb(23.5672%, 50.90332%, 12.90741%)" stop-opacity="1"/> <stop offset="0.265625" stop-color="rgb(23.675537%, 51.135254%, 12.979126%)" stop-opacity="1"/> <stop offset="0.28125" stop-color="rgb(23.782349%, 51.365662%, 13.047791%)" stop-opacity="1"/> <stop offset="0.296875" stop-color="rgb(23.88916%, 51.596069%, 13.117981%)" stop-opacity="1"/> <stop offset="0.3125" stop-color="rgb(23.997498%, 51.828003%, 13.189697%)" stop-opacity="1"/> <stop offset="0.328125" stop-color="rgb(24.104309%, 52.058411%, 13.258362%)" stop-opacity="1"/> <stop offset="0.34375" stop-color="rgb(24.211121%, 52.290344%, 13.330078%)" stop-opacity="1"/> <stop offset="0.359375" stop-color="rgb(24.317932%, 52.520752%, 13.398743%)" stop-opacity="1"/> <stop offset="0.375" stop-color="rgb(24.42627%, 52.75116%, 13.468933%)" stop-opacity="1"/> <stop offset="0.390625" stop-color="rgb(24.533081%, 52.981567%, 13.539124%)" stop-opacity="1"/> <stop offset="0.40625" stop-color="rgb(24.639893%, 53.213501%, 13.609314%)" stop-opacity="1"/> <stop offset="0.421875" stop-color="rgb(24.746704%, 53.443909%, 13.679504%)" stop-opacity="1"/> <stop offset="0.4375" stop-color="rgb(24.855042%, 53.675842%, 13.749695%)" stop-opacity="1"/> <stop offset="0.453125" stop-color="rgb(24.961853%, 53.90625%, 13.819885%)" stop-opacity="1"/> <stop offset="0.46875" stop-color="rgb(25.068665%, 54.136658%, 13.890076%)" stop-opacity="1"/> <stop offset="0.484375" stop-color="rgb(25.177002%, 54.368591%, 13.960266%)" stop-opacity="1"/> <stop offset="0.5" stop-color="rgb(25.283813%, 54.598999%, 14.030457%)" stop-opacity="1"/> <stop offset="0.515625" stop-color="rgb(25.390625%, 54.830933%, 14.100647%)" stop-opacity="1"/> <stop offset="0.53125" stop-color="rgb(25.497437%, 55.06134%, 14.170837%)" stop-opacity="1"/> <stop offset="0.546875" stop-color="rgb(25.605774%, 55.293274%, 14.241028%)" stop-opacity="1"/> <stop offset="0.5625" stop-color="rgb(25.712585%, 55.523682%, 14.311218%)" stop-opacity="1"/> <stop offset="0.578125" stop-color="rgb(25.819397%, 55.754089%, 14.381409%)" stop-opacity="1"/> <stop offset="0.59375" stop-color="rgb(25.926208%, 55.984497%, 14.451599%)" stop-opacity="1"/> <stop offset="0.609375" stop-color="rgb(26.034546%, 56.216431%, 14.52179%)" stop-opacity="1"/> <stop offset="0.625" stop-color="rgb(26.141357%, 56.448364%, 14.59198%)" stop-opacity="1"/> <stop offset="0.640625" stop-color="rgb(26.248169%, 56.678772%, 14.66217%)" stop-opacity="1"/> <stop offset="0.65625" stop-color="rgb(26.356506%, 56.90918%, 14.732361%)" stop-opacity="1"/> <stop offset="0.671875" stop-color="rgb(26.463318%, 57.139587%, 14.802551%)" stop-opacity="1"/> <stop offset="0.6875" stop-color="rgb(26.570129%, 57.371521%, 14.872742%)" stop-opacity="1"/> <stop offset="0.703125" stop-color="rgb(26.676941%, 57.601929%, 14.942932%)" stop-opacity="1"/> <stop offset="0.71875" stop-color="rgb(26.785278%, 57.833862%, 15.013123%)" stop-opacity="1"/> <stop offset="0.734375" stop-color="rgb(26.89209%, 58.06427%, 15.083313%)" stop-opacity="1"/> <stop offset="0.75" stop-color="rgb(26.998901%, 58.294678%, 15.153503%)" stop-opacity="1"/> <stop offset="0.765625" stop-color="rgb(27.105713%, 58.525085%, 15.223694%)" stop-opacity="1"/> <stop offset="0.78125" stop-color="rgb(27.21405%, 58.757019%, 15.293884%)" stop-opacity="1"/> <stop offset="0.796875" stop-color="rgb(27.320862%, 58.988953%, 15.364075%)" stop-opacity="1"/> <stop offset="0.8125" stop-color="rgb(27.427673%, 59.21936%, 15.434265%)" stop-opacity="1"/> <stop offset="0.828125" stop-color="rgb(27.536011%, 59.449768%, 15.504456%)" stop-opacity="1"/> <stop offset="0.84375" stop-color="rgb(27.642822%, 59.681702%, 15.574646%)" stop-opacity="1"/> <stop offset="0.859375" stop-color="rgb(27.749634%, 59.912109%, 15.644836%)" stop-opacity="1"/> <stop offset="0.875" stop-color="rgb(27.856445%, 60.142517%, 15.715027%)" stop-opacity="1"/> <stop offset="0.890625" stop-color="rgb(27.964783%, 60.374451%, 15.785217%)" stop-opacity="1"/> <stop offset="0.90625" stop-color="rgb(28.071594%, 60.604858%, 15.855408%)" stop-opacity="1"/> <stop offset="0.921875" stop-color="rgb(28.178406%, 60.836792%, 15.925598%)" stop-opacity="1"/> <stop offset="0.9375" stop-color="rgb(28.286743%, 61.0672%, 15.995789%)" stop-opacity="1"/> <stop offset="0.953125" stop-color="rgb(28.393555%, 61.297607%, 16.065979%)" stop-opacity="1"/> <stop offset="0.96875" stop-color="rgb(28.500366%, 61.529541%, 16.136169%)" stop-opacity="1"/> <stop offset="0.984375" stop-color="rgb(28.607178%, 61.759949%, 16.20636%)" stop-opacity="1"/> <stop offset="1" stop-color="rgb(28.715515%, 61.991882%, 16.27655%)" stop-opacity="1"/> </linearGradient> </defs> <g clip-path="url(#lw-clip-0)"> <g clip-path="url(#lw-clip-1)"> <path fill-rule="nonzero" fill="url(#lw-linear-pattern-0)" d="M 86.859375 27.828125 L 86.859375 109.273438 L 98.085938 109.273438 L 98.085938 27.828125 Z M 86.859375 27.828125 "/> </g> </g> <g clip-path="url(#lw-clip-2)"> <g clip-path="url(#lw-clip-3)"> <path fill-rule="nonzero" fill="url(#lw-linear-pattern-1)" d="M 39.335938 28.265625 L 39.335938 101.285156 L 75.636719 101.285156 L 75.636719 28.265625 Z M 39.335938 28.265625 "/> </g> </g> <g clip-path="url(#lw-clip-4)"> <g clip-path="url(#lw-clip-5)"> <path fill-rule="nonzero" fill="url(#lw-linear-pattern-2)" d="M 109.320312 28.265625 L 109.320312 101.285156 L 145.617188 101.285156 L 145.617188 28.265625 Z M 109.320312 28.265625 "/> </g> </g> <path fill-rule="nonzero" fill="currentColor" fill-opacity="1" d="M 204.855469 63.417969 C 201.960938 61.386719 198.527344 60.425781 195.203125 59.5 C 194.195312 59.214844 193.242188 58.949219 192.320312 58.660156 C 188.972656 57.542969 186.746094 56.335938 186.746094 54.0625 C 186.746094 52.898438 187.269531 51.9375 188.289062 51.214844 C 189.410156 50.515625 191.097656 50.132812 193.042969 50.132812 C 196.484375 50.132812 200.042969 51.15625 203.902344 53.253906 C 204.1875 53.429688 204.480469 53.484375 204.75 53.417969 C 205.03125 53.347656 205.269531 53.152344 205.449219 52.835938 L 208.464844 46.476562 C 208.625 46.199219 208.664062 45.890625 208.582031 45.609375 C 208.492188 45.324219 208.285156 45.089844 207.988281 44.945312 C 203.738281 42.625 199.019531 41.5 193.566406 41.5 C 188.390625 41.5 184.078125 42.671875 181.09375 44.894531 C 177.984375 47.207031 176.34375 50.515625 176.34375 54.457031 C 176.34375 59.054688 178.09375 62.25 182.027344 64.816406 C 184.707031 66.480469 187.636719 67.378906 190.46875 68.25 C 191.679688 68.621094 192.820312 68.972656 193.894531 69.367188 C 197.707031 70.691406 199.335938 72.207031 199.335938 74.429688 C 199.335938 75.292969 199.101562 76.917969 197.515625 78.074219 C 196.742188 78.652344 195.246094 79.339844 192.515625 79.339844 C 187.441406 79.339844 183.707031 77.257812 180.605469 75.300781 C 180.316406 75.121094 180.023438 75.066406 179.753906 75.140625 C 179.464844 75.222656 179.226562 75.445312 179.058594 75.78125 L 176.039062 82.152344 C 175.742188 82.742188 175.929688 83.339844 176.511719 83.671875 C 179.757812 85.605469 185.191406 87.90625 192.648438 87.90625 C 197.546875 87.90625 201.957031 86.5625 205.058594 84.121094 C 208.335938 81.609375 210.070312 77.984375 210.070312 73.640625 C 210.070312 69.238281 208.316406 65.800781 204.855469 63.417969 "/> <path fill-rule="nonzero" fill="currentColor" fill-opacity="1" d="M 249.933594 42.09375 L 213.667969 42.09375 C 213.03125 42.09375 212.476562 42.652344 212.476562 43.285156 L 212.476562 49.722656 C 212.476562 50.359375 213.03125 50.917969 213.667969 50.917969 L 226.863281 50.917969 L 226.863281 86.054688 C 226.863281 86.691406 227.421875 87.25 228.058594 87.25 L 235.546875 87.25 C 236.179688 87.25 236.738281 86.691406 236.738281 86.054688 L 236.738281 50.917969 L 249.933594 50.917969 C 250.628906 50.917969 251.191406 50.382812 251.191406 49.722656 L 251.191406 43.285156 C 251.191406 42.628906 250.628906 42.09375 249.933594 42.09375 "/> <path fill-rule="nonzero" fill="currentColor" fill-opacity="1" d="M 282.832031 56.953125 C 282.832031 59.308594 281.914062 61.183594 280.234375 62.230469 C 278.804688 63.183594 276.667969 63.3125 274.566406 63.3125 L 265.578125 63.3125 L 265.578125 50.523438 L 275.355469 50.523438 C 277.488281 50.523438 279.148438 50.921875 280.425781 51.738281 C 282.023438 52.847656 282.832031 54.605469 282.832031 56.953125 M 283.941406 70.316406 C 285.453125 69.644531 286.644531 68.910156 287.773438 67.953125 C 291.089844 65.148438 292.84375 61.300781 292.84375 56.820312 C 292.84375 51.890625 290.917969 47.636719 287.566406 45.15625 C 284.78125 43.09375 281.042969 42.09375 276.144531 42.09375 L 256.960938 42.09375 C 256.265625 42.09375 255.699219 42.628906 255.699219 43.285156 L 255.699219 86.054688 C 255.699219 86.714844 256.265625 87.25 256.960938 87.25 L 264.382812 87.25 C 265.054688 87.25 265.578125 86.726562 265.578125 86.054688 L 265.578125 71.746094 L 273.726562 71.746094 L 282.464844 86.15625 C 282.964844 87.082031 283.558594 87.25 284.554688 87.25 L 292.765625 87.25 C 293.367188 87.25 293.636719 87 293.757812 86.792969 C 293.972656 86.414062 293.894531 85.84375 293.53125 85.222656 Z M 283.941406 70.316406 "/> <path fill-rule="nonzero" fill="currentColor" fill-opacity="1" d="M 335.453125 64.769531 C 335.453125 72.703125 329.585938 78.6875 321.800781 78.6875 C 313.980469 78.6875 308.082031 72.703125 308.082031 64.769531 C 308.082031 56.800781 313.980469 50.789062 321.800781 50.789062 C 329.585938 50.789062 335.453125 56.800781 335.453125 64.769531 M 321.800781 41.5 C 307.785156 41.5 297.613281 51.285156 297.613281 64.769531 C 297.613281 78.175781 307.785156 87.90625 321.800781 87.90625 C 335.777344 87.90625 345.921875 78.175781 345.921875 64.769531 C 345.921875 51.285156 335.777344 41.5 321.800781 41.5 "/> <path fill-rule="nonzero" fill="currentColor" fill-opacity="1" d="M 398.070312 42.09375 L 390.515625 42.09375 C 389.621094 42.09375 389.046875 42.277344 388.5625 43.25 L 375.929688 65.074219 L 363.367188 43.25 C 362.8125 42.277344 362.230469 42.09375 361.347656 42.09375 L 353.855469 42.09375 C 353.164062 42.09375 352.597656 42.628906 352.597656 43.285156 L 352.597656 86.054688 C 352.597656 86.714844 353.164062 87.25 353.855469 87.25 L 360.953125 87.25 C 361.648438 87.25 362.210938 86.714844 362.210938 86.054688 L 362.210938 59.492188 L 371.609375 75.445312 C 372 76.160156 372.433594 76.605469 373.371094 76.605469 L 378.824219 76.605469 C 379.773438 76.605469 380.160156 76.214844 380.578125 75.449219 L 389.714844 59.507812 L 389.714844 86.054688 C 389.714844 86.714844 390.28125 87.25 390.976562 87.25 L 398.070312 87.25 C 398.765625 87.25 399.328125 86.714844 399.328125 86.054688 L 399.328125 43.285156 C 399.328125 42.628906 398.765625 42.09375 398.070312 42.09375 "/></svg></div>
@@ -236,6 +255,7 @@ summary{cursor:pointer;font-weight:600}
         <div class="metric" id="m-clean"><div class="m-lab">Ztráty čištěním</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div><div class="m-sub" id="s-clean"></div></div>
         <div class="metric" id="m-imp"><div class="m-lab">Nečistoty ve vyčištěném zrnu</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div></div>
         <div class="metric" id="m-tail"><div class="m-lab">Vratka do kláskového dopravníku</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div><div class="m-sub" id="s-tail"></div></div>
+        <div class="metric" id="m-dist"><div class="m-lab">Rozložení na sítech (vlevo / vpravo)</div><div class="m-val"><span>40 / 60</span> <small>%</small></div></div>
         <div class="metric" id="m-opt"><div class="m-lab">Doporučené otáčky</div><div class="m-val"><span>0</span> <small>ot/min</small></div></div>
         <div class="metric total" id="m-loss"><div class="m-lab">Celkové ztráty zrna za strojem</div><div class="m-val"><span>0</span> <small>%</small></div><div class="bar"><i></i></div></div>
       </div>
@@ -264,15 +284,15 @@ summary{cursor:pointer;font-weight:600}
 /* ================= model ================= */
 const EXAG=6,VIS=0.1;
 const CROPS={
-  psenice:{fan:1050,up:14,low:8,ref:900,refC:12,mOpt:14,kpe:6,ks:[.032,.018,.018],kc:0xe2a92b,ear:[.10,.026,.026],earC:0xd2ae5a,earShape:'ear'},
-  jecmen:{fan:1000,up:14,low:7,ref:850,refC:10,mOpt:14,kpe:6,ks:[.036,.016,.016],kc:0xdcae4a,ear:[.11,.024,.024],earC:0xcfb067,earShape:'ear'},
-  repka:{fan:700,up:8,low:3,ref:650,refC:20,mOpt:9,kpe:8,ks:[.018,.018,.018],kc:0x5a3a22,ear:[.08,.013,.013],earC:0x9a8a4a,earShape:'pod'},
-  kukurice:{fan:1100,up:18,low:12,ref:400,refC:35,mOpt:22,kpe:8,ks:[.042,.032,.022],kc:0xf0b419,ear:[.16,.05,.05],earC:0xe9b52a,earShape:'cob'}
+  psenice:{brk:1.0,fan:1050,up:14,low:8,ref:900,refC:12,mOpt:14,kpe:6,ks:[.032,.018,.018],kc:0xe2a92b,ear:[.10,.026,.026],earC:0xd2ae5a,earShape:'ear'},
+  jecmen:{brk:1.1,fan:1000,up:14,low:7,ref:850,refC:10,mOpt:14,kpe:6,ks:[.036,.016,.016],kc:0xdcae4a,ear:[.11,.024,.024],earC:0xcfb067,earShape:'ear'},
+  repka:{brk:1.7,fan:700,up:8,low:3,ref:650,refC:20,mOpt:9,kpe:8,ks:[.018,.018,.018],kc:0x5a3a22,ear:[.08,.013,.013],earC:0x9a8a4a,earShape:'pod'},
+  kukurice:{brk:0.8,fan:1100,up:18,low:12,ref:400,refC:35,mOpt:22,kpe:8,ks:[.042,.032,.022],kc:0xf0b419,ear:[.16,.05,.05],earC:0xe9b52a,earShape:'cob'}
 };
-const MACH={dia:760,cap:40};
+const MACH={dia:762,cap:40};
 const LIM={rpm:[200,1300],clr:[2,50],feed:[5,80],moist:[8,32],fan:[400,1500],up:[0,25],low:[0,20],slope:[-12,12]};
 const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const state={crop:'psenice',rpm:900,clr:12,feed:35,moist:14,fan:1050,up:14,low:8,slope:0,paused:reduced};
+const state={crop:'psenice',rpm:900,clr:12,feed:35,moist:14,fan:1050,up:14,low:8,slope:0,model:'700',paused:reduced};
 let cur=null,optN=900;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmt=(v,d=1)=>v.toFixed(d).replace('.',',');
@@ -286,20 +306,31 @@ function model(s){
   // grain falling through the rear end of the upper sieve (behind the lower sieve) lands on the tailings pan; grain riding over the end is a cleaning loss
   const tailsU=clamp(5*Math.pow(o1,-1.2)*Math.exp(1.5*(f-1))*Math.pow(fr,0.5)*(1+0.8*up),0,60);
   const tailsL=clamp(7*Math.pow(o2,-1.3)*Math.exp(1.0*(f-1))*Math.pow(fr,0.5),0,60);
-  const tails=clamp(tailsU+tailsL,0,80);
-  const frE=fr*(1+0.6*tails/100); // returned material adds load to the rotor
-  const dmgBase=clamp(0.4*Math.exp(3.5*(r-1))*Math.pow(rc,-0.6)*Math.exp(-0.07*dm)*(1+0.15*Math.max(0,1-fr)),0,30);
-  const dmgRet=clamp(tails/100*(1.5*dmgBase+0.5),0,20);
+  // partly threshed heads (nedomlatky) fall through the concave, cannot pass the sieves and go to the tailings
+  const tailsH=clamp(4*Math.exp(-4.5*(r-1))*Math.pow(rc,0.9)*Math.exp(0.08*dm),0,40);
+  const tails=clamp(tailsU+tailsL+tailsH,0,80);
+  const m8=s.model==='800';
+  // S7 700: tailings go back into the rotor; S7 800: active rethresher puts them back onto the return pan (sieves only)
+  const frE=fr*(1+(m8?0:0.6)*tails/100),frC=fr*(1+0.6*tails/100); // returned material adds load to the rotor
+  // concave cover (klasňovací plech): more aggressive threshing; left 2/3 open = only the right third closed
+  const plateAgg=s.plate?(s.plateLeftOpen?0.33:1):0;
+  const distR=(s.plate&&s.plateLeftOpen)?50:60; // share of material on the right side of the sieves
+  // straw breakage in the separation section loads the sieves; separator covers reduce it
+  const ch=(c.brk||1)*(1+0.04*Math.max(0,c.mOpt-s.moist))*(s.covers?0.7:1)*(1+0.15*plateAgg);
+  const sepMul=(1+0.3*plateAgg)*(s.covers?1.2:1);
+  const cf=(0.6+0.4*ch)*(1+0.25*(Math.abs(distR-50)-10)/10);
+  const dmgBase=clamp(0.4*Math.exp(3.5*(r-1))*Math.pow(rc,-0.6)*Math.exp(-0.07*dm)*(1+0.15*Math.max(0,1-fr))*(1+0.25*plateAgg),0,30);
+  const dmgRet=clamp(tails/100*(m8?(0.6*dmgBase+0.25):(1.5*dmgBase+0.5)),0,20);
   const damage=clamp(dmgBase+dmgRet,0,30);
-  const unthr=clamp(0.3*Math.exp(-4.5*(r-1))*Math.pow(rc,0.9)*Math.exp(0.08*dm)*Math.pow(fr,0.4),0,30);
-  const sepF=x=>0.15*Math.exp(3.2*(x-1))*Math.pow(r,-0.8)*Math.exp(0.05*dm)*Math.pow(rc,-0.3);
+  const unthr=clamp(0.3*Math.exp(-4.5*(r-1))*Math.pow(rc,0.9)*Math.exp(0.08*dm)*Math.pow(fr,0.4)*(1-0.45*plateAgg),0,30);
+  const sepF=x=>sepMul*0.15*Math.exp(3.2*(x-1))*Math.pow(r,-0.8)*Math.exp(0.05*dm)*Math.pow(rc,-0.3);
   const sep=clamp(sepF(frE),0,30),sepRet=Math.max(0,sep-clamp(sepF(fr),0,30));
-  const sF=Math.exp(1.2*up+0.7*dn),cb=0.08*Math.pow(frE,0.8)*sF;
-  const cleanAir=clamp(cb*Math.exp(6*(f-1))+0.1*Math.exp(4*(1-f))*Math.pow(frE,1.5)*sF,0,30);
-  const cleanSieve=clamp(cb*Math.pow(o1,-2.4),0,30);
+  const sF=Math.exp(1.2*up+0.7*dn),cb=0.08*Math.pow(frC,0.8)*sF;
+  const cleanAir=clamp(cf*(cb*Math.exp(6*(f-1))+0.1*Math.exp(4*(1-f))*Math.pow(frC,1.5)*sF),0,30);
+  const cleanSieve=clamp(cf*cb*Math.pow(o1,-2.4),0,30);
   const clean=clamp(cleanAir+cleanSieve,0,30);
-  const imp=clamp(0.8*Math.exp(4.5*(1-f))*Math.pow(o1,0.6)*Math.pow(o2,1.4)*(1+1.0*dn),0,40);
-  return {cleanAir,cleanSieve,g,up,dn,r,rc,fr,frE,f,o1,o2,damage,dmgBase,dmgRet,unthr,sep,sepRet,clean,imp,tails,tailsU,tailsL,loss:unthr+sep+clean};
+  const imp=clamp(0.8*Math.exp(4.5*(1-f))*Math.pow(o1,0.6)*Math.pow(o2,1.4)*(1+1.0*dn)*(0.6+0.4*ch),0,40);
+  return {tailsH,plateAgg,distR,ch,cleanAir,cleanSieve,g,up,dn,r,rc,fr,frE,f,o1,o2,damage,dmgBase,dmgRet,unthr,sep,sepRet,clean,imp,tails,tailsU,tailsL,loss:unthr+sep+clean};
 }
 function optimumRpm(s){let best=s.rpm,bv=Infinity;for(let n=LIM.rpm[0];n<=LIM.rpm[1];n+=5){const m=model({...s,rpm:n});const sc=m.damage+m.loss;if(sc<bv){bv=sc;best=n;}}return best;}
 
@@ -323,12 +354,17 @@ function status(){
   else if(m.clean>0.9&&m.o1<0.65){lvl='bad';t='Horní síto je příliš zavřené';s='Zrno nestihne propadnout a odchází s plevami za stroj. Horní síto otevřete.';}
   else if(m.imp>4&&m.f<0.9){lvl='bad';t='Ventilátor fouká slabě';s='Plevy se neodfouknou a končí ve vyčištěném zrnu. Přidejte otáčky ventilátoru.';}
   else if(m.imp>4&&m.o2>1.25){lvl='bad';t='Spodní síto je příliš otevřené';s='Do čistého zrna propadají plevy a úlomky klasů. Spodní síto přivřete.';}
-  else if(m.tails>35){lvl='bad';t='Vratka je příliš velká';s='Zrno, které propadne horním sítem až na jeho konci nebo nepropadne spodním sítem, se vrací do rotoru. Při domlácení se poškozuje a navíc zatěžuje separaci. '+(m.tailsU>m.tailsL?'Pootevřete horní síto nebo uberte vzduch, aby zrno propadávalo dřív.':'Otevřete spodní síto.');}
+  else if(m.tails>35){lvl='bad';t='Vratka je příliš velká';s=(state.model==='800'?'Zrno, které propadne horním sítem až na jeho konci nebo nepropadne spodním sítem, jde přes aktivní domlacovač znovu na síta a přetěžuje je. ':'Zrno, které propadne horním sítem až na jeho konci nebo nepropadne spodním sítem, se vrací do rotoru. Při domlácení se poškozuje a navíc zatěžuje separaci. ')+(m.tailsU>m.tailsL?'Pootevřete horní síto nebo uberte vzduch, aby zrno propadávalo dřív.':'Otevřete spodní síto.');}
   else if(m.up>0.4&&m.clean>0.45){lvl=m.clean>0.9?'bad':'warn';t='Jízda do kopce';s='Materiál ujíždí po sítech dozadu rychleji a zrno odchází s plevami za stroj. Uberte vzduch, pootevřete horní síto nebo zpomalte.';}
   else if(m.dn>0.4&&(m.clean>0.45||m.imp>2)){lvl=(m.clean>0.9||m.imp>4)?'bad':'warn';t='Jízda z kopce';s='Materiál se hromadí v přední části sít, vzduch jím hůř prochází a do zrna se dostávají nečistoty. Přidejte vzduch nebo snižte zatížení.';}
+  else if(m.unthr>0.8&&!state.plate&&m.r>=0.95&&m.rc<=1.1){lvl='warn';t='Těžko mlatitelná plodina';s='Klasy se špatně vymlacují i při správných otáčkách a mezeře koše. Pomůže klasňovací plech, který zvýší agresivitu mlácení.';}
+  else if(state.crop==='repka'&&!state.covers&&m.clean>0.45){lvl='warn';t='Drcená sláma přetěžuje síta';s='V řepce separační část drtí slámu a úlomky přetěžují síta. Zkuste nasadit krycí plechy separace.';}
+  else if(state.covers&&m.sep>0.8){lvl='warn';t='Krycí plechy omezují separaci';s='Menší plocha separace zvyšuje ztráty separací. Snižte zatížení nebo krycí plechy odeberte, pokud síta nejsou přetížená.';}
+  else if(state.plate&&!state.plateLeftOpen&&m.damage>1.5){lvl='warn';t='Agresivní mlácení';s='Klasňovací plech zvyšuje poškození zrna. Zkuste otevřít levé 2/3 plechu nebo ubrat otáčky.';}
+  else if(m.tailsH>8){lvl='warn';t='Mnoho nedomlatků ve vratce';s='Klasy se v rotoru nedomlátí a končí ve vratce'+(state.model==='800'?', kde je musí domlátit aktivní domlacovač':', odkud se vrací zpět do rotoru')+'. Zvyšte otáčky rotoru, zužte mezeru koše nebo nasaďte klasňovací plech.';}
   else if(m.imp>2||m.tails>22||m.clean>0.45){lvl='warn';
     if(m.imp>2){t='Vyčištěné zrno je špinavé';s=m.f<1?'Zkuste přidat vzduch.':'Zkuste přivřít spodní síto.';}
-    else if(m.tails>22){t='Roste vratka';s='Vrácené zrno se v rotoru domlácí a poškozuje. '+(m.tailsU>m.tailsL?'Zkuste pootevřít horní síto nebo ubrat vzduch.':'Zkuste pootevřít spodní síto.');}
+    else if(m.tails>22){t='Roste vratka';s=(state.model==='800'?'Vratka jde přes domlacovač znovu na síta a zvyšuje jejich zatížení. ':'Vrácené zrno se v rotoru domlácí a poškozuje. ')+(m.tailsU>m.tailsL?'Zkuste pootevřít horní síto nebo ubrat vzduch.':'Zkuste pootevřít spodní síto.');}
     else{t='Rostou ztráty čištěním';s=m.f>1?'Zkuste ubrat vzduch.':'Zkuste otevřít horní síto.';}}
   else if(m.damage>1.5||m.loss>1){lvl='warn';
     if(m.damage>1.5&&m.damage>=m.loss){t='Poškození roste';s=m.r>1?'Zkuste ubrat otáčky o pár desítek.':'Zkuste rozšířit mezeru koše.';}
@@ -344,29 +380,36 @@ function syncInputs(){
   $('o-v').textContent='Obvodová rychlost rotoru '+fmt(vTip(state.rpm))+' m/s';
   $('o-clr').textContent=state.clr+' mm';$('o-feed').textContent=state.feed+' t/h';$('o-moist').textContent=state.moist+' %';
   $('o-fan').textContent=state.fan+' ot/min';$('o-air').textContent='Proud vzduchu '+Math.round(cur.f*100)+' % doporučeného';
+  $('o-model').textContent=state.model==='800'?'Aktivní domlacovač: nedomlatky se domlátí v malém bubnu a jdou zpět na spádovou desku.':'Vratka se vrací elevátorem z pravé strany zpět do rotoru.';
   $('o-up').textContent=state.up+' mm';$('o-low').textContent=state.low+' mm';
+  $('tPlate').setAttribute('aria-pressed',state.plate?'true':'false');$('tPlateL').setAttribute('aria-pressed',state.plateLeftOpen?'true':'false');$('tPlateL').disabled=!state.plate;$('tCovers').setAttribute('aria-pressed',state.covers?'true':'false');
   const c=CROPS[state.crop];$('calFan').value=c.fan;$('calUp').value=c.up;$('calLow').value=c.low;$('calRpm').value=c.ref;$('calClr').value=c.refC;$('calDia').value=MACH.dia;$('calCap').value=MACH.cap;
 }
 function apply(){
   cur=model(state);optN=optimumRpm(state);syncInputs();
   setMetric('m-damage',cur.damage,1.5,3);setMetric('m-unthr',cur.unthr,.6,1.2);setMetric('m-sep',cur.sep,.6,1.2);setMetric('m-loss',cur.loss,1,2);setMetric('m-clean',cur.clean,.45,.9);setMetric('m-imp',cur.imp,2,4);setMetric('m-tail',cur.tails,22,35);
+  $('m-dist').querySelector('span').textContent=(100-cur.distR)+' / '+cur.distR;
   $('s-damage').textContent='z toho domlácením vratky '+fmt(cur.dmgRet,2)+' %';
   $('s-sep').textContent='z toho kvůli vratce '+fmt(cur.sepRet,2)+' %';
   $('s-clean').textContent='vyfoukáno vzduchem '+fmt(cur.cleanAir,2)+' %, nepropadlo horním sítem '+fmt(cur.cleanSieve,2)+' %';
-  $('s-tail').textContent='propadlo koncem horního síta '+fmt(cur.tailsU)+' %, nepropadlo spodním '+fmt(cur.tailsL)+' %';
+  $('s-tail').textContent='nedomlatky (klásky) '+fmt(cur.tailsH)+' %, propadlo koncem horního síta '+fmt(cur.tailsU)+' %, nepropadlo spodním '+fmt(cur.tailsL)+' %';
   $('m-opt').querySelector('span').textContent=optN;
   status();drawChart();if(scene3d)scene3d.onParams();
 }
 document.querySelectorAll('input[type=range]').forEach(inp=>inp.addEventListener('input',()=>{state[inp.dataset.k]=+inp.value;apply();}));
 document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;state[k]=clamp(state[k]+(+b.dataset.d),...LIM[k]);apply();}));
-document.querySelectorAll('.crops button').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.crops button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));
+document.querySelectorAll('[data-crop]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-crop]').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));
   state.crop=b.dataset.crop;const c=CROPS[state.crop];state.clr=c.refC;state.moist=c.mOpt;state.fan=c.fan;state.up=c.up;state.low=c.low;state.rpm=optimumRpm(state);
   if(scene3d)scene3d.reset();apply();
 }));
 $('bOpt').addEventListener('click',()=>{const c0=CROPS[state.crop];state.clr=c0.refC;state.fan=c0.fan;state.up=c0.up;state.low=c0.low;state.rpm=optimumRpm(state);apply();});
 $('bPause').addEventListener('click',()=>{state.paused=!state.paused;$('bPause').textContent=state.paused?'Spustit':'Pozastavit';});
+document.querySelectorAll('[data-model]').forEach(b=>b.addEventListener('click',()=>{state.model=b.dataset.model;document.querySelectorAll('[data-model]').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));apply();}));
 $('bTags').addEventListener('click',e=>{const t=$('tags'),on=t.style.visibility==='hidden';t.style.visibility=on?'visible':'hidden';e.currentTarget.setAttribute('aria-pressed',on?'true':'false');});
+$('tPlate').addEventListener('click',()=>{state.plate=!state.plate;if(!state.plate)state.plateLeftOpen=false;apply();});
+$('tPlateL').addEventListener('click',()=>{if(!state.plate)return;state.plateLeftOpen=!state.plateLeftOpen;apply();});
+$('tCovers').addEventListener('click',()=>{state.covers=!state.covers;apply();});
 function calNum(id,lo,hi,fallback){const v=parseFloat($(id).value);return isFinite(v)?clamp(v,lo,hi):fallback;}
 ['calRpm','calClr','calDia','calCap','calFan','calUp','calLow'].forEach(id=>$(id).addEventListener('change',()=>{
   const c=CROPS[state.crop];
@@ -423,7 +466,9 @@ function build3D(){
   const glass=new THREE.MeshStandardMaterial({color:0xc6d8e4,transparent:true,opacity:.14,metalness:0,roughness:.1,side:THREE.DoubleSide,depthWrite:false});
   const glassEdge=new THREE.LineBasicMaterial({color:0x7d8a96,transparent:true,opacity:.6});
   const add=(geo,mat,x=0,y=0,z=0,parent=scene)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);parent.add(m);return m;};
-  const R0=0.30,RB=0.365,RH=0.48,XA=-2.6,XT0=-2.0,XT1=0.2,XS1=2.08,XE=2.1;
+  // real scale (metres): rotor 3124 mm long, 762 mm over rasp bars; inlet cone + threshing = 40 %, separation = 60 %
+  const R0=0.315,RB=0.381,RH=0.5,XA=-1.25,XT0=-0.9,XT1=0.0,XE=1.874,XS1=XE-0.02;
+  const PL0=XT0+0.02,PL1=PL0+0.22,CV0=XT1,CV1=XT1+0.42;
   // whole rotor assembly inclined (rear up), same angle as the auger bed
   const RANG=10*Math.PI/180,cR=Math.cos(RANG),sR=Math.sin(RANG);
   const rotorFrame=new THREE.Group();rotorFrame.rotation.z=RANG;scene.add(rotorFrame);
@@ -433,13 +478,13 @@ function build3D(){
   const rotG=new THREE.Group();rotorFrame.add(rotG);
   const core=new THREE.CylinderGeometry(R0,R0,XE-XT0+0.05,40);core.rotateZ(Math.PI/2);add(core,rotorMat,(XE+XT0)/2,0,0,rotG);
   const cone=new THREE.CylinderGeometry(0.11,R0,XT0-XA,40);cone.rotateZ(Math.PI/2);add(cone,rotorMat,(XA+XT0)/2,0,0,rotG);
-  class Helix extends THREE.Curve{constructor(ph){super();this.ph=ph;}getPoint(t,o=new THREE.Vector3()){const r=0.13+(RB+0.03-0.13)*t,a=this.ph+t*Math.PI*2.2;return o.set(XA-0.05+t*(XT0-XA+0.1),r*Math.sin(a),r*Math.cos(a));}}
+  class Helix extends THREE.Curve{constructor(ph){super();this.ph=ph;}getPoint(t,o=new THREE.Vector3()){const r=0.13+(RB+0.03-0.13)*t,a=this.ph-t*Math.PI*2.2;return o.set(XA-0.05+t*(XT0-XA+0.1),r*Math.sin(a),r*Math.cos(a));}}
   [0,Math.PI].forEach(ph=>add(new THREE.TubeGeometry(new Helix(ph),80,0.022,6),steel,0,0,0,rotG));
   const barGeo=new THREE.BoxGeometry(0.24,0.065,0.05);
-  for(let j=0;j<12;j++)for(let k=0;k<4;k++){const a=k*Math.PI/2+j*0.42,x=XT0+0.1+j*0.18;
-    const m=add(barGeo,steelDark,x,(R0+0.032)*Math.sin(a),(R0+0.032)*Math.cos(a),rotG);m.rotation.set(Math.PI/2-a,0,0);m.rotateX(0);m.rotateY(0.35);}
+  for(let j=0;j<6;j++)for(let k=0;k<4;k++){const a=k*Math.PI/2-j*0.42,x=XT0+0.09+j*0.145;
+    const m=add(barGeo,steelDark,x,(R0+0.034)*Math.sin(a),(R0+0.034)*Math.cos(a),rotG);m.rotation.set(Math.PI/2-a,0,0);m.rotateX(0);m.rotateY(-0.35);}
   const tineGeo=new THREE.CylinderGeometry(0.014,0.018,0.075,6);
-  for(let j=0;j<18;j++)for(let k=0;k<3;k++){const a=k*2*Math.PI/3+j*0.5,x=XT1+0.1+j*0.125;if(x>XE-0.06)continue;
+  for(let j=0;j<18;j++)for(let k=0;k<3;k++){const a=k*2*Math.PI/3-j*0.5,x=XT1+0.1+j*0.125;if(x>XE-0.06)continue;
     const m=add(tineGeo,steelDark,x,(R0+0.035)*Math.sin(a),(R0+0.035)*Math.cos(a),rotG);m.rotation.set(Math.PI/2-a,0,0);}
 
   /* --- housing top (glass) --- */
@@ -459,7 +504,14 @@ function build3D(){
     const g=new THREE.CylinderGeometry(0.03,0.03,XS1-XT0,6);g.rotateZ(Math.PI/2);
     add(g,steelDark,(XS1+XT0)/2,Math.sin(t),-Math.cos(t),concG);}
   [arcStart,arcStart+arcLen].forEach(t=>{const g=new THREE.BoxGeometry(XS1-XT0,0.06,0.12);add(g,frameMat,(XS1+XT0)/2,Math.sin(t),-Math.cos(t),concG);});
-  const concR=()=>RB+0.006+state.clr/1000*1.6;
+  // concave cover plate (thirds; index 2 = right side in the direction of travel) and separator covers
+  const plateMat=M(0xe3e7eb,{metalness:.4,roughness:.3,emissive:0x3a3a3a,side:THREE.DoubleSide});
+  const plateG=new THREE.Group();concG.add(plateG);plateG.visible=false;
+  const plateThirds=[0,1,2].map(i=>{const t0=arcStart+arcLen*i/3,t1=arcStart+arcLen*(i+1)/3;
+    const g=new THREE.CylinderGeometry(1.07,1.07,PL1-PL0,16,1,true,Math.PI-t1,t1-t0-0.02);g.rotateZ(Math.PI/2);return add(g,plateMat,(PL0+PL1)/2,0,0,plateG);});
+  const coversG=new THREE.Group();concG.add(coversG);coversG.visible=false;
+  {const g=new THREE.CylinderGeometry(1.08,1.08,CV1-CV0,32,1,true,Math.PI-arcStart-arcLen,arcLen);g.rotateZ(Math.PI/2);add(g,plateMat,(CV0+CV1)/2,0,0,coversG);}
+  const concR=()=>RB+0.004+state.clr/1000;
 
   const FA=new THREE.Vector3(XA-0.6,-0.3,0),FB=new THREE.Vector3(XA,0,0),fAng=0;
 
@@ -467,32 +519,32 @@ function build3D(){
   // layout (x along machine, + = rearward)
   // auger bed parallel to the rotor (same incline), under the threshing section
   const ABANG=RANG,BED0=L2W(XT0-0.05,-0.62,0),BED1=L2W(XT1+0.1,-0.62,0);
-  const ABX0=BED0.x,ABY0=BED0.y,ABX1=BED1.x,ABL=BED0.distanceTo(BED1),LANES=[-0.4,-0.24,-0.08,0.08,0.24,0.4];
+  const ABX0=BED0.x,ABY0=BED0.y,ABX1=BED1.x,ABL=BED0.distanceTo(BED1),LANES=[-0.63,-0.45,-0.27,-0.09,0.09,0.27,0.45,0.63];
   const abY=x=>ABY0+(x-ABX0)*Math.tan(ABANG);
-  const RPX0=0.95,RPX1=2.25,RPS=0.2,PSX0=0.3,PSX1=1.0;
-  const SX0=1.0,SX1=3.4,LX0=1.1,LX1=2.95,AUGX=0.7,TAILX=3.1,AUGY=-1.78,TAILY=-1.66,ELZ=-0.72,ELTOP=1.85;
-  const PANY=AUGY+0.06,SL1=0.05,SL2=0.045,SA=0.022,SZ=0.56;
+  const RPX0=0.55,RPX1=2.0,RPS=0.2,PSX0=0.1,PSX1=0.8;
+  const SX0=0.8,SX1=2.9,LX0=0.9,LX1=2.5,AUGX=0.5,TAILX=2.65,AUGY=-1.78,TAILY=-1.66,ELZ=-0.95,ELTOP=1.85;
+  const PANY=AUGY+0.06,SL1=0.05,SL2=0.045,SA=0.022,SZ=0.8;
   const rpY=x=>-0.62+(x-RPX0)*RPS,psY=x=>-0.95+(x-PSX0)*0.04;
   const chafY=x=>-1.06+(x-SX0)*SL1,lowY=x=>-1.31+(x-LX0)*SL2,panY=x=>AUGY+0.1+Math.abs(x-AUGX)*0.06;
   const tailPanY=x=>TAILY+0.06+Math.max(Math.abs(x-TAILX),0.08)*0.4;
   const tmp=new THREE.Object3D();
   const lightSteel=M(0xc4cad0,{metalness:.5,roughness:.3});
   const panMat=M(0x3d7a35,{transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide});
-  function seg(x0,y0,x1,y1,mat,th=0.012,w=0.94,parent=scene){const p=add(new THREE.BoxGeometry(Math.hypot(x1-x0,y1-y0),th,w),mat,(x0+x1)/2,(y0+y1)/2,0,parent);p.rotation.z=Math.atan2(y1-y0,x1-x0);return p;}
+  function seg(x0,y0,x1,y1,mat,th=0.012,w=1.43,parent=scene){const p=add(new THREE.BoxGeometry(Math.hypot(x1-x0,y1-y0),th,w),mat,(x0+x1)/2,(y0+y1)/2,0,parent);p.rotation.z=Math.atan2(y1-y0,x1-x0);return p;}
   const chafG=new THREE.Group(),lowG=new THREE.Group();scene.add(chafG);scene.add(lowG);
   function rails(g,x0,x1,yf,h,sl){const ang=Math.atan(sl),L=(x1-x0)/Math.cos(ang),mx=(x0+x1)/2,my=yf(mx);
-    [-1,1].forEach(s=>{const b=add(new THREE.BoxGeometry(L,h,0.03),frameMat,mx,my,s*0.5,g);b.rotation.z=ang;
-      const lip=add(new THREE.BoxGeometry(L,0.014,0.07),frameMat,mx,my-h/2+0.007,s*0.475,g);lip.rotation.z=ang;
-      const top=add(new THREE.BoxGeometry(L,0.014,0.07),frameMat,mx,my+h/2-0.007,s*0.475,g);top.rotation.z=ang;
-      for(let x=x0+0.2;x<x1-0.1;x+=0.4)add(new THREE.CylinderGeometry(0.011,0.011,0.012,10).rotateX(Math.PI/2),lightSteel,x,yf(x),s*0.517,g);});
-    [x0,x1].forEach(x=>add(new THREE.BoxGeometry(0.035,h*0.7,1.0),frameMat,x,yf(x),0,g));}
+    [-1,1].forEach(s=>{const b=add(new THREE.BoxGeometry(L,h,0.03),frameMat,mx,my,s*0.74,g);b.rotation.z=ang;
+      const lip=add(new THREE.BoxGeometry(L,0.014,0.07),frameMat,mx,my-h/2+0.007,s*0.715,g);lip.rotation.z=ang;
+      const top=add(new THREE.BoxGeometry(L,0.014,0.07),frameMat,mx,my+h/2-0.007,s*0.715,g);top.rotation.z=ang;
+      for(let x=x0+0.2;x<x1-0.1;x+=0.4)add(new THREE.CylinderGeometry(0.011,0.011,0.012,10).rotateX(Math.PI/2),lightSteel,x,yf(x),s*0.757,g);});
+    [x0,x1].forEach(x=>add(new THREE.BoxGeometry(0.035,h*0.7,1.5),frameMat,x,yf(x),0,g));}
   rails(chafG,SX0,SX1,chafY,0.12,SL1);rails(lowG,LX0,LX1,lowY,0.09,SL2);rails(chafG,PSX0,PSX1,psY,0.1,0.04);
   // adjustable louvres: upper (chaffer) and lower sieve; fixed louvres on the pre-sieve
-  const nU=Math.floor((SX1-SX0-0.06)/0.028),lvU=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.042,0.94),steel,nU);chafG.add(lvU);
-  const nLo=Math.floor((LX1-LX0-0.06)/0.022),lvL=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.032,0.94),lightSteel,nLo);lowG.add(lvL);
-  {const n=Math.floor((PSX1-PSX0-0.06)/0.028),lv=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.04,0.94),steel,n);
+  const nU=Math.floor((SX1-SX0-0.06)/0.028),lvU=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.042,1.43),steel,nU);chafG.add(lvU);
+  const nLo=Math.floor((LX1-LX0-0.06)/0.022),lvL=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.032,1.43),lightSteel,nLo);lowG.add(lvL);
+  {const n=Math.floor((PSX1-PSX0-0.06)/0.028),lv=new THREE.InstancedMesh(new THREE.BoxGeometry(0.004,0.04,1.43),steel,n);
    for(let i=0;i<n;i++){const x=PSX0+0.04+i*0.028;tmp.position.set(x,psY(x)+0.004,0);tmp.rotation.set(0,0,0.55-Math.PI/2);tmp.updateMatrix();lv.setMatrixAt(i,tmp.matrix);}chafG.add(lv);
-   for(let z=-0.44;z<=0.44;z+=0.045){const f=add(new THREE.CylinderGeometry(0.005,0.005,0.16,5).rotateZ(Math.PI/2),steel,PSX1+0.06,psY(PSX1)+0.005,z,chafG);f.rotation.z=-0.1;}}
+   for(let z=-0.69;z<=0.69;z+=0.045){const f=add(new THREE.CylinderGeometry(0.005,0.005,0.16,5).rotateZ(Math.PI/2),steel,PSX1+0.06,psY(PSX1)+0.005,z,chafG);f.rotation.z=-0.1;}}
   function setLouvers(){
     const aU=Math.asin(clamp(state.up/28,0,0.95)),aL=Math.asin(clamp(state.low/22,0,0.95));
     for(let i=0;i<nU;i++){const x=SX0+0.04+i*0.028;tmp.position.set(x,chafY(x)+0.004,0);tmp.rotation.set(0,0,aU-Math.PI/2+Math.atan(SL1));tmp.scale.set(1,1,1);tmp.updateMatrix();lvU.setMatrixAt(i,tmp.matrix);}
@@ -502,18 +554,18 @@ function build3D(){
   // impurity zones on the upper sieve (shown with the Nečistoty button)
   const impZones=new THREE.Group();chafG.add(impZones);impZones.visible=false;
   {const mid=(SX0+SX1)/2,ang=Math.atan(SL1);
-   [[SX0,mid,0x2fbf4f],[mid,SX1,0xc0853a]].forEach(([a,b,c])=>{const L=(b-a)/Math.cos(ang),g=new THREE.PlaneGeometry(L,0.94);g.rotateX(-Math.PI/2);
+   [[SX0,mid,0x2fbf4f],[mid,SX1,0xc0853a]].forEach(([a,b,c])=>{const L=(b-a)/Math.cos(ang),g=new THREE.PlaneGeometry(L,1.43);g.rotateX(-Math.PI/2);
      const m=add(g,new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide}),(a+b)/2,chafY((a+b)/2)+0.03,0,impZones);m.rotation.z=ang;});}
   // return pan under the separation section (moves with the shoe, conveys forward onto the pre-sieve)
-  {const n=10,w=(RPX1-RPX0)/n;for(let i=0;i<n;i++){const x0=RPX0+i*w;seg(x0,rpY(x0)-0.012,x0+w,rpY(x0+w)+0.006,M(0x3b7a32),0.012,0.94,chafG);}
-   [-1,1].forEach(s=>{const b=add(new THREE.BoxGeometry(RPX1-RPX0,0.12,0.025),frameMat,(RPX0+RPX1)/2,rpY((RPX0+RPX1)/2)+0.04,s*0.48,chafG);b.rotation.z=Math.atan(RPS);});
-   add(new THREE.BoxGeometry(0.025,0.12,0.96),frameMat,RPX1,rpY(RPX1)+0.04,0,chafG);}
+  {const n=10,w=(RPX1-RPX0)/n;for(let i=0;i<n;i++){const x0=RPX0+i*w;seg(x0,rpY(x0)-0.012,x0+w,rpY(x0+w)+0.006,M(0x3b7a32),0.012,1.43,chafG);}
+   [-1,1].forEach(s=>{const b=add(new THREE.BoxGeometry(RPX1-RPX0,0.12,0.025),frameMat,(RPX0+RPX1)/2,rpY((RPX0+RPX1)/2)+0.04,s*0.73,chafG);b.rotation.z=Math.atan(RPS);});
+   add(new THREE.BoxGeometry(0.025,0.12,1.47),frameMat,RPX1,rpY(RPX1)+0.04,0,chafG);}
   // STROM logo plates on both sides of the return pan
   {const c=document.createElement('canvas');c.width=1024;c.height=256;const g=c.getContext('2d');
    const tex=new THREE.CanvasTexture(c);tex.anisotropy=4;
    const mat=new THREE.MeshStandardMaterial({map:tex,metalness:0,roughness:.6,transparent:true,alphaTest:.02});
    const w=0.5,h=w*256/1024,mx=(RPX0+RPX1)/2,my=rpY(mx)+0.04,ang=Math.atan(RPS);
-   [-1,1].forEach(s=>{const m=add(new THREE.PlaneGeometry(w,h),mat,mx,my,s*0.495,chafG);m.rotation.set(0,s<0?Math.PI:0,s<0?-ang:ang);});
+   [-1,1].forEach(s=>{const m=add(new THREE.PlaneGeometry(w,h),mat,mx,my,s*0.745,chafG);m.rotation.set(0,s<0?Math.PI:0,s<0?-ang:ang);});
    tex.needsUpdate=true;
    const el=document.querySelector('.logo-head');
    if(el){const str=new XMLSerializer().serializeToString(el).replace(/currentColor/g,'#231f20').replace('<svg ','<svg width="1464" height="348" ');
@@ -528,33 +580,33 @@ function build3D(){
   const bedMat=M(0x2c5e27,{side:THREE.DoubleSide});
   const bedAugers=LANES.map(z=>{add(bedTrough,bedMat,ABL/2,0,z,bedG);
     const g=new THREE.Group();g.position.set(0,0,z);bedG.add(g);add(augHelix,steel,0,0,0,g);add(augShaft,steelDark,ABL/2,0,0,g);return g;});
-  [-1,1].forEach(s=>add(new THREE.BoxGeometry(ABL,0.16,0.025),frameMat,ABL/2,0.02,s*0.5,bedG));
-  add(new THREE.BoxGeometry(0.025,0.16,1.0),frameMat,0,0.02,0,bedG);
+  [-1,1].forEach(s=>add(new THREE.BoxGeometry(ABL,0.16,0.025),frameMat,ABL/2,0.02,s*0.74,bedG));
+  add(new THREE.BoxGeometry(0.025,0.16,1.5),frameMat,0,0.02,0,bedG);
   // rockers (balanced: chaffer up, sieve down), hangers and eccentric drive
   const linkGeo=new THREE.BoxGeometry(0.042,1,0.022);
   function pivotDisc(r){const g=new THREE.Group();add(new THREE.CylinderGeometry(r,r,0.022,24).rotateX(Math.PI/2),lightSteel,0,0,0,g);
     add(new THREE.TorusGeometry(r,0.007,6,24),steelDark,0,0,0.011,g);add(new THREE.CylinderGeometry(r*0.28,r*0.28,0.04,10).rotateX(Math.PI/2),steelDark,0,0,0,g);scene.add(g);return g;}
   const links=[];
   [-1,1].forEach(s=>{
-    [1.45,2.8].forEach(x=>links.push({type:'rock',x,z:s*SZ,bar:add(linkGeo,steel,0,0,s*SZ),d:[pivotDisc(0.045),pivotDisc(0.055),pivotDisc(0.045)]}));
-    [[1.1,-0.22],[3.3,-0.22]].forEach(([x,o])=>links.push({type:'hang',x,o,z:s*SZ,bar:add(linkGeo,steel,0,0,s*SZ),d:[pivotDisc(0.04),pivotDisc(0.05)]}));
+    [1.25,2.3].forEach(x=>links.push({type:'rock',x,z:s*SZ,bar:add(linkGeo,steel,0,0,s*SZ),d:[pivotDisc(0.045),pivotDisc(0.055),pivotDisc(0.045)]}));
+    [[0.9,-0.22],[2.8,-0.22]].forEach(([x,o])=>links.push({type:'hang',x,o,z:s*SZ,bar:add(linkGeo,steel,0,0,s*SZ),d:[pivotDisc(0.04),pivotDisc(0.05)]}));
   });
-  const crank={c:new THREE.Vector3(0.88,-1.56,SZ+0.02),disc:pivotDisc(0.085),pin:pivotDisc(0.03),bar:add(new THREE.BoxGeometry(0.05,1,0.022),steel,0,0,SZ+0.03)};
+  const crank={c:new THREE.Vector3(0.68,-1.56,SZ+0.02),disc:pivotDisc(0.085),pin:pivotDisc(0.03),bar:add(new THREE.BoxGeometry(0.05,1,0.022),steel,0,0,SZ+0.03)};
   function setBar(m,ax,ay,bx,by){m.position.x=(ax+bx)/2;m.position.y=(ay+by)/2;m.scale.y=Math.hypot(bx-ax,by-ay);m.rotation.z=Math.atan2(by-ay,bx-ax)-Math.PI/2;}
   // cross-flow fan under the auger bed
-  const FAN={x:-1.0,y:-1.52};
+  const FAN={x:-0.45,y:-1.45};
   const fanG=new THREE.Group();fanG.position.set(FAN.x,FAN.y,0);scene.add(fanG);
   for(let k=0;k<18;k++){const a=k*Math.PI*2/18;
-    const b1=add(new THREE.BoxGeometry(0.01,0.075,0.92),steel,Math.cos(a)*0.2,Math.sin(a)*0.2,0,fanG);b1.rotation.z=a+0.55;
-    const b2=add(new THREE.BoxGeometry(0.01,0.05,0.92),steel,Math.cos(a+0.17)*0.25,Math.sin(a+0.17)*0.25,0,fanG);b2.rotation.z=a+1.1;}
-  [-0.465,0.465].forEach(z=>{add(new THREE.TorusGeometry(0.27,0.012,6,40),frameMat,0,0,z,fanG);
+    const b1=add(new THREE.BoxGeometry(0.01,0.075,1.42),steel,Math.cos(a)*0.2,Math.sin(a)*0.2,0,fanG);b1.rotation.z=a+0.55;
+    const b2=add(new THREE.BoxGeometry(0.01,0.05,1.42),steel,Math.cos(a+0.17)*0.25,Math.sin(a+0.17)*0.25,0,fanG);b2.rotation.z=a+1.1;}
+  [-0.715,0.715].forEach(z=>{add(new THREE.TorusGeometry(0.27,0.012,6,40),frameMat,0,0,z,fanG);
     for(let k=0;k<5;k++){const sp=add(new THREE.BoxGeometry(0.27,0.025,0.012),frameMat,0,0,z,fanG);sp.rotation.z=k*Math.PI*2/5;sp.position.x=Math.cos(k*Math.PI*2/5)*0.135;sp.position.y=Math.sin(k*Math.PI*2/5)*0.135;}});
-  add(new THREE.CylinderGeometry(0.05,0.05,1.0,14).rotateX(Math.PI/2),steelDark,0,0,0,fanG);
-  {const h=new THREE.CylinderGeometry(0.34,0.34,0.95,36,1,true,Math.PI/2+0.65,4.6);h.rotateX(Math.PI/2);add(h,M(0x2c5e27,{side:THREE.DoubleSide}),FAN.x,FAN.y,0);
+  add(new THREE.CylinderGeometry(0.05,0.05,1.5,14).rotateX(Math.PI/2),steelDark,0,0,0,fanG);
+  {const h=new THREE.CylinderGeometry(0.34,0.34,1.45,36,1,true,Math.PI/2+0.65,4.6);h.rotateX(Math.PI/2);add(h,M(0x2c5e27,{side:THREE.DoubleSide}),FAN.x,FAN.y,0);
    // two outlet ducts: narrow upper duct (fast air into the step between pre-sieve and upper sieve), wide lower duct (slower, larger volume under both sieves)
-   seg(-0.8,-1.84,0.5,-1.64,frameMat,0.02,0.95);
-   seg(FAN.x+0.2,FAN.y+0.3,0.95,-0.99,frameMat,0.02,0.95);seg(-0.66,-1.42,0.95,-1.1,frameMat,0.02,0.95);
-   [-1,1].forEach(s=>add(new THREE.CylinderGeometry(0.34,0.34,0.01,36).rotateX(Math.PI/2),new THREE.MeshStandardMaterial({color:0x2c5e27,transparent:true,opacity:.22,depthWrite:false,side:THREE.DoubleSide}),FAN.x,FAN.y,s*0.48));}
+   seg(FAN.x+0.2,FAN.y-0.3,AUGX-0.15,-1.66,frameMat,0.02,1.45);
+   seg(FAN.x+0.2,FAN.y+0.3,PSX1-0.05,-0.99,frameMat,0.02,1.45);seg(FAN.x+0.33,FAN.y+0.13,PSX1-0.05,-1.1,frameMat,0.02,1.45);
+   [-1,1].forEach(s=>add(new THREE.CylinderGeometry(0.34,0.34,0.01,36).rotateX(Math.PI/2),new THREE.MeshStandardMaterial({color:0x2c5e27,transparent:true,opacity:.22,depthWrite:false,side:THREE.DoubleSide}),FAN.x,FAN.y,s*0.73));}
   // clean grain pan and tailings pan
   seg(AUGX+0.1,panY(AUGX+0.1),LX1,panY(LX1),panMat);
   seg(LX1+0.04,tailPanY(LX1+0.04),TAILX-0.08,tailPanY(TAILX-0.08),panMat);seg(TAILX+0.08,tailPanY(TAILX+0.08),SX1-0.03,tailPanY(SX1-0.03),panMat);
@@ -570,25 +622,67 @@ function build3D(){
     add(new THREE.TorusGeometry(0.095,0.008,6,28),steelDark,0,0,end+0.006,g);
     for(let k=0;k<3;k++){const sp=add(new THREE.BoxGeometry(0.09,0.012,0.006),steelDark,0,0,end+0.008,g);sp.rotation.z=k*Math.PI/3;}
     return g;}
-  const augG=auger(AUGX,AUGY,0.55,ELZ),tailG=auger(TAILX,TAILY,0.55,-0.55);
-  // tailings return to the rotor
-  const retCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(TAILX,TAILY,-0.62),new THREE.Vector3(TAILX+0.05,-0.7,-0.76),L2W(XE+0.3,0.62,-0.72),
-    L2W(0.5,0.64,-0.68),L2W(-1.4,0.62,-0.62),L2W(XA+0.15,0.12,-0.2)]);
+  const augG=auger(AUGX,AUGY,0.78,ELZ),tailG=auger(TAILX,TAILY,0.78,-0.78);
+  // tailings return to the rotor (S7 700): elevator on the right side up to the front of the rotor, then a short pipe into the rotor inlet
+  const R7B=new THREE.Vector3(TAILX,TAILY,-0.9),R7T=L2W(XA+0.35,0.62,-0.9),R7IN=L2W(XA+0.15,0.12,-0.2);
+  const retCurve=new THREE.CurvePath();retCurve.add(new THREE.LineCurve3(R7B,R7T));retCurve.add(new THREE.LineCurve3(R7T,R7IN));
+  const elevMat=new THREE.MeshStandardMaterial({color:0x2c5e27,transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide});
+  const elevEdge=new THREE.LineBasicMaterial({color:0x1e4a1b});
+  const elevs=[];
+  function elevator(a,b,parent){const g=new THREE.Group();parent.add(g);const d=b.clone().sub(a),L=d.length();
+    g.position.copy(a).add(b).multiplyScalar(0.5);g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());
+    const box=new THREE.BoxGeometry(0.26,L+0.2,0.17);add(box,elevMat,0,0,0,g);g.add(new THREE.LineSegments(new THREE.EdgesGeometry(box),elevEdge));
+    // chain-and-paddle elevator: two sprockets, endless chain, paddles on the chain (up on +x side, back down on -x side)
+    const r=0.055,P=2*L+2*Math.PI*r;
+    add(new THREE.BoxGeometry(0.008,Math.max(0.05,L-0.16),0.15),elevMat,0,0,0,g);
+    const spr=[L/2,-L/2].map(y=>{const sg=new THREE.Group();sg.position.set(0,y,0);g.add(sg);
+      add(new THREE.CylinderGeometry(r-0.008,r-0.008,0.03,18).rotateX(Math.PI/2),lightSteel,0,0,0,sg);
+      for(let k=0;k<10;k++){const t=add(new THREE.BoxGeometry(0.014,0.014,0.03),steelDark,Math.cos(k*Math.PI/5)*r,Math.sin(k*Math.PI/5)*r,0,sg);t.rotation.z=k*Math.PI/5;}
+      add(new THREE.CylinderGeometry(0.012,0.012,0.19,8).rotateX(Math.PI/2),steelDark,0,0,0,sg);return sg;});
+    const n=Math.max(6,Math.floor(P/0.16)),pad=new THREE.InstancedMesh(new THREE.BoxGeometry(0.1,0.01,0.14),M(0x2b2f33,{roughness:.8}),n);g.add(pad);
+    const nl=Math.floor(P/0.025),link=new THREE.InstancedMesh(new THREE.BoxGeometry(0.012,0.02,0.03),steel,nl);g.add(link);
+    elevs.push({pad,n,link,nl,L,r,P,spr});return g;}
+  // position and orientation on the chain loop at distance d (radial offset o from the chain)
+  function chainAt(e,d,o,m){const L=e.L,r=e.r;d=((d%e.P)+e.P)%e.P;let x,y,a;
+    if(d<L){x=r;y=-L/2+d;a=0;}
+    else if(d<L+Math.PI*r){a=(d-L)/r;x=r*Math.cos(a);y=L/2+r*Math.sin(a);}
+    else if(d<2*L+Math.PI*r){x=-r;y=L/2-(d-L-Math.PI*r);a=Math.PI;}
+    else{a=Math.PI+(d-2*L-Math.PI*r)/r;x=r*Math.cos(a);y=-L/2+r*Math.sin(a);}
+    tmp.position.set(x+Math.cos(a)*o,y+Math.sin(a)*o,0);tmp.rotation.set(0,0,a);tmp.scale.set(1,1,1);tmp.updateMatrix();m.copy(tmp.matrix);}
   const retLen=retCurve.getLength();
   function retTex(){const c=document.createElement('canvas');c.width=128;c.height=8;const g=c.getContext('2d');g.fillStyle='rgba(140,124,240,.25)';g.fillRect(0,0,128,8);
     g.fillStyle='rgba(140,124,240,1)';for(let i=0;i<2;i++){const x=i*64;g.beginPath();g.moveTo(x+10,0);g.lineTo(x+34,4);g.lineTo(x+10,8);g.closePath();g.fill();}
     const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.repeat.set(Math.round(retLen*3),1);return t;}
   const retMat=new THREE.MeshBasicMaterial({map:retTex(),transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide});
-  add(new THREE.TubeGeometry(retCurve,140,0.045,10),retMat);
+  const retTube=new THREE.Group();scene.add(retTube);elevator(R7B,R7T,retTube);
+  {const d=R7IN.clone().sub(R7T),pipe=add(new THREE.CylinderGeometry(0.075,0.075,d.length(),16),frameMat,0,0,0,retTube);pipe.position.copy(R7T).add(R7IN).multiplyScalar(0.5);pipe.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());}
+  // S7 800: short elevator on the right side -> active rethresher (drum with rasp bars + concave) -> auger onto the return pan
+  const RTX=1.85,RTY=0.02,RTZ=-0.95,RAY=-0.24,RAZ1=0.74;
+  const rt8=new THREE.Group();scene.add(rt8);rt8.visible=false;
+  const E0=new THREE.Vector3(TAILX,TAILY,-0.9),E1=new THREE.Vector3(RTX+0.12,RTY+0.14,RTZ);
+  const elevLen=E0.distanceTo(E1);
+  const retMat2=new THREE.MeshBasicMaterial({map:retTex(),transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide});retMat2.map.repeat.set(Math.round(elevLen*3),1);
+  elevator(E0,E1,rt8);
+  // rethresher unit, drum axis across the machine (along z)
+  const rtUnit=new THREE.Group();rtUnit.position.set(RTX,RTY,RTZ);rtUnit.rotation.y=Math.PI/2;rt8.add(rtUnit);
+  {const g=new THREE.CylinderGeometry(0.2,0.2,0.34,28,1,true);g.rotateZ(Math.PI/2);add(g,new THREE.MeshStandardMaterial({color:0x2c5e27,transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide}),0,0,0,rtUnit);
+   const cc=new THREE.CylinderGeometry(0.155,0.155,0.3,24,1,true,Math.PI,Math.PI);cc.rotateZ(Math.PI/2);add(cc,M(0xa3aab1,{side:THREE.DoubleSide,metalness:.5}),0,0,0,rtUnit);
+   [-1,1].forEach(s=>add(new THREE.CylinderGeometry(0.2,0.2,0.012,28).rotateZ(Math.PI/2),frameMat,s*0.17,0,0,rtUnit));}
+  const rtDrum=new THREE.Group();rtUnit.add(rtDrum);
+  add(new THREE.CylinderGeometry(0.1,0.1,0.3,20).rotateZ(Math.PI/2),M(0x737c86,{metalness:.45}),0,0,0,rtDrum);
+  for(let k=0;k<6;k++){const a=k*Math.PI/3,b=add(new THREE.BoxGeometry(0.3,0.04,0.03),steelDark,0,Math.sin(a)*0.115,Math.cos(a)*0.115,rtDrum);b.rotation.x=-a;}
+  {const tr=new THREE.CylinderGeometry(0.09,0.09,Math.abs(RTZ-RAZ1)+0.1,20,1,true,-Math.PI/2-0.35,Math.PI+0.7);tr.rotateX(Math.PI/2);add(tr,M(0x2c5e27,{side:THREE.DoubleSide}),RTX,RAY,(RTZ+RAZ1)/2-0.05,rt8);}
+  const rtAug=new THREE.Group();rtAug.position.set(RTX,RAY,0);rt8.add(rtAug);
+  add(new THREE.TubeGeometry(new AugH(RTZ-0.05,RAZ1),Math.round(Math.abs(RTZ-RAZ1)*120),0.01,5),steel,0,0,0,rtAug);
   // airflow streamlines from the fan rearward through pre-sieve and sieves
   function airTex(){const c=document.createElement('canvas');c.width=256;c.height=4;const g=c.getContext('2d');
     for(let i=0;i<4;i++){const x0=i*64,gr=g.createLinearGradient(x0,0,x0+48,0);gr.addColorStop(0,'rgba(80,220,255,0)');gr.addColorStop(1,'rgba(150,240,255,1)');g.fillStyle=gr;g.fillRect(x0,0,48,4);}
     const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.repeat.set(2,1);return t;}
   const airG=new THREE.Group();scene.add(airG);const airMats=[];
   const LAY=[
-    {pts:[[-1.55,-2.05],[-1.35,-1.88],[-0.5,-1.68],[0.3,-1.55],[1.2,-1.45],[2.2,-1.4],[3.0,-1.36]],zs:[-0.4,-0.2,0,0.2,0.4],r:0.008,col:0x4fc8f0,spd:0.6},
-    {pts:[[-1.5,-2.0],[-1.3,-1.78],[-0.5,-1.5],[0.3,-1.35],[1.2,-1.2],[2.2,-1.11],[3.3,-0.98]],zs:[-0.4,-0.2,0,0.2,0.4],r:0.008,col:0x4fc8f0,spd:0.6},
-    {pts:[[-1.45,-1.98],[-1.28,-1.6],[-0.55,-1.3],[0.2,-1.17],[0.9,-1.055],[1.3,-1.0],[2.2,-0.9],[3.6,-0.72]],zs:[-0.3,0,0.3],r:0.005,col:0xa6f2ff,spd:1.6}];
+    {pts:[[-1.0,-1.98],[-0.8,-1.82],[-0.1,-1.66],[0.6,-1.55],[1.3,-1.45],[2.0,-1.4],[2.6,-1.36]],zs:[-0.62,-0.31,0,0.31,0.62],r:0.008,col:0x4fc8f0,spd:0.6},
+    {pts:[[-0.95,-1.93],[-0.75,-1.72],[-0.1,-1.48],[0.6,-1.33],[1.3,-1.2],[2.0,-1.12],[2.9,-0.99]],zs:[-0.62,-0.31,0,0.31,0.62],r:0.008,col:0x4fc8f0,spd:0.6},
+    {pts:[[-0.9,-1.9],[-0.72,-1.55],[-0.05,-1.22],[0.4,-1.12],[0.72,-1.04],[1.1,-0.98],[1.9,-0.9],[3.2,-0.72]],zs:[-0.5,0,0.5],r:0.005,col:0xa6f2ff,spd:1.6}];
   const AIRSPD=LAY.map(l=>l.spd);
   LAY.forEach(L=>{const mat=new THREE.MeshBasicMaterial({map:airTex(),color:L.col,transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide});airMats.push(mat);
     L.zs.forEach((z,zi)=>{const j=(zi%2?0.015:-0.012);
@@ -605,10 +699,10 @@ function build3D(){
     }
     const a=tsec*14+Math.PI/2,c=crank.c,px=c.x+0.06*Math.cos(a),py=c.y+0.06*Math.sin(a);
     crank.disc.position.copy(c);crank.disc.rotation.z=a;crank.pin.position.set(px,py,c.z+0.02);
-    const ax=1.2-dx,ay=lowY(1.2);setBar(crank.bar,px,py,ax,ay);
+    const ax=1.0-dx,ay=lowY(1.0);setBar(crank.bar,px,py,ax,ay);
     fanAng+=dt*9*ff;fanG.rotation.z=fanAng;augG.rotation.z=-tsec*12;tailG.rotation.z=-tsec*12;
     bedAugers.forEach(g=>g.rotation.x=-tsec*10);
-    retMat.map.offset.x-=dt*0.6;
+    for(const e of elevs){const off=tsec*0.9,mm=new THREE.Matrix4();for(let i=0;i<e.n;i++){chainAt(e,off+i*e.P/e.n,0.05,mm);e.pad.setMatrixAt(i,mm);}for(let i=0;i<e.nl;i++){chainAt(e,off+i*e.P/e.nl,0,mm);e.link.setMatrixAt(i,mm);}e.pad.instanceMatrix.needsUpdate=true;e.link.instanceMatrix.needsUpdate=true;e.spr.forEach(sg=>sg.rotation.z=off/e.r);}rtDrum.rotation.x=-tsec*16;rtAug.rotation.z=-tsec*12;
     airMats.forEach((m,i)=>{airOff[i]=(airOff[i]+dt*AIRSPD[i]*ff)%1;m.map.offset.x=-airOff[i];m.opacity=clamp(0.15+0.75*ff,0.12,1);});
   }
   const elH=ELTOP-(PANY-0.15);
@@ -643,7 +737,8 @@ function build3D(){
     let rem=0;
     for(let i=0;i<c.kpe;i++){if(rnd()<pU){rem++;continue;}const lost=rnd()<pS;P.push(newRP('kernel',{fate:lost?'lost':'tank',dmg:rnd()<pD}));}
     if(rem)P.push(newRP('chunk',{fate:'lost',n:rem}));
-    for(let i=0;i<(state.showImp?5:2);i++)P.push(newRP('chaff',{fate:'chaff'}));
+    if(rnd()<Math.min(.8,cur.tailsH/100*EXAG))P.push(newRP('head',{fate:'tank',n:2+Math.floor(rnd()*2)}));
+    for(let i=0;i<Math.round((state.showImp?5:2)*cur.ch);i++)P.push(newRP('chaff',{fate:'chaff'}));
   }
   const tv2=new THREE.Vector3();
   const slopeV=()=>Math.max(0.5,1+0.6*cur.up-0.4*cur.dn);
@@ -655,14 +750,16 @@ function build3D(){
         const cr=concR(),rad=(p.lx<XT0)?0.15+(RB-0.15)*clamp((p.lx-XA)/(XT0-XA),0,1)+0.03:RB+0.012+p.rj*(cr-RB-0.012);
         let ly=rad*Math.sin(p.th);const lz=rad*Math.cos(p.th);p.a1+=dt*4;
         p.front=true;
-        if((p.fate==='tank'||p.fate==='chaff')&&p.lx>=p.drop&&(Math.sin(p.th)<-0.55||p.lx>XS1-0.05)){
-          ly=Math.min(ly,-(cr+0.04)*0.8);L2W(p.lx,ly,lz,tv2);p.x=tv2.x;p.y=tv2.y;p.z=lz;
-          p.st='fall';p.vx=ax*0.15;p.vy=-0.4;p.vz=lz*0.5;return true;}
+        if(state.covers&&p.drop>CV0&&p.drop<CV1&&p.cvl===undefined&&(p.fate==='tank'||p.fate==='chaff')){p.cvl=rnd()<0.1;if(!p.cvl)p.drop=CV1+0.02+rnd()*(XS1-CV1-0.1);else if(p.fate==='tank')p.fate='lost';}
+        const blocked=state.plate&&p.lx>PL0&&p.lx<PL1&&(!state.plateLeftOpen||lz<-0.33*rad);
+        if(!blocked&&(p.fate==='tank'||p.fate==='chaff')&&p.lx>=p.drop&&(Math.sin(p.th)<-0.55||p.lx>XS1-0.05)){
+          ly=Math.min(ly,-(cr+0.04)*0.8);const even=state.plate&&state.plateLeftOpen;const fz=even?(rnd()-0.5)*1.3:(rnd()<0.7?-(0.12+0.52*Math.sqrt(rnd())):rnd()*0.62);L2W(p.lx,ly,fz,tv2);p.x=tv2.x;p.y=tv2.y;p.z=fz;
+          p.st='fall';p.vx=ax*0.15;p.vy=-0.4;p.vz=0;return true;}
         L2W(p.lx,ly,lz,tv2);p.x=tv2.x;p.y=tv2.y;p.z=lz;
         if(p.lx>=XE){const v=2.3+rnd()*1.2;p.st='exit';p.vx=v*cR;p.vy=v*sR-0.2+rnd()*0.8;p.vz=(rnd()-.5)*1.2;p.va=(rnd()-.5)*10;
           if(p.fate==='lost')counts.lost+=p.k==='chunk'?p.n:1;}
         return true;}
-      case 'fall':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.z=clamp(p.z,-0.42,0.42);
+      case 'fall':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.z=clamp(p.z,-0.66,0.66);
         if(p.x<ABX1&&p.y<=abY(p.x)+0.05){p.st='abed';p.y=abY(p.x)+0.05;p.lane=LANES.reduce((b,z)=>Math.abs(z-p.z)<Math.abs(b-p.z)?z:b,LANES[0])+(rnd()-.5)*0.06;return true;}
         if(p.x>=RPX0&&p.y<=rpY(p.x)+0.015){p.st='rpan';p.y=rpY(p.x)+0.015;return true;}
         if(p.y<-0.7){p.st='pfall';}
@@ -694,7 +791,7 @@ function build3D(){
       case 'cfall':{p.vy-=6*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.y<=chafY(p.x)+0.015){p.st='sieve';p.vx=0.35+rnd()*0.4;p.t=0.25+rnd()*0.7;
           const rr=rnd(),pa=cur.cleanAir/100*EXAG,ps=cur.cleanSieve/100*EXAG;p.cl=p.k==='kernel'&&rr<Math.min(.85,pa+ps);p.cs=p.cl&&rr>=pa;if(p.cl)p.vx=p.cs?0.45+rnd()*0.2:0.9+rnd()*0.4;}return true;}
       case 'sieve':{
-        if(p.tu===undefined){p.tu=!p.cl&&rnd()<Math.min(.8,cur.tailsU/100);if(p.tu)p.ret=true;}
+        if(p.tu===undefined){p.tu=p.k==='head'?rnd()<0.5:(!p.cl&&rnd()<Math.min(.8,cur.tailsU/100));if(p.tu)p.ret=true;}
         p.x+=p.vx*slopeV()*dt;p.y=chafY(p.x)+0.015+Math.sin(tsec*14)*0.004;p.t-=dt;
         if(p.cl){if(p.x>=SX1-0.03){const ff=state.fan/CROPS[state.crop].fan;p.st='blown';p.fate='lost';counts.lost++;p.vx=p.cs?1.0+rnd()*0.3:(1.2+rnd()*0.8)*ff;p.vy=p.cs?0.1:(0.3+rnd()*0.3)*ff;p.vz=(rnd()-.5)*0.3;}}
         else if(p.tu){if(p.tx===undefined)p.tx=LX1+0.08+rnd()*(SX1-LX1-0.2);if(p.x>=p.tx){p.st='tfall';p.vy=-0.2;p.vx=0.05;}}
@@ -704,13 +801,21 @@ function build3D(){
       case 'tailrun':{p.x+=0.6*dt;p.y=lowY(p.x)+0.012;if(p.x>=LX1){p.st='tfall';p.vy=0;p.vx=0.05;}return true;}
       case 'tfall':{p.vy-=6*dt;p.y+=p.vy*dt;p.x+=p.vx*dt;if(p.y<=tailPanY(p.x)+0.012){p.st='tpan';}return true;}
       case 'tpan':{const d=TAILX-p.x;p.x+=Math.sign(d)*Math.min(Math.abs(d),0.9*dt);p.y=tailPanY(p.x)+0.012;if(Math.abs(d)<0.03){p.st='taug';p.x=TAILX+(rnd()-.5)*0.06;p.y=TAILY-0.03+rnd()*0.05;}return true;}
-      case 'taug':{p.z-=0.8*dt;if(p.z<=-0.55){p.st='ret';p.u=0;}return true;}
+      case 'taug':{p.z-=0.8*dt;if(p.z<=-0.78){p.u=0;p.st=state.model==='800'?'relev':'ret';}return true;}
+      case 'relev':{p.u+=dt*1.3/elevLen;const u=Math.min(p.u,1);p.x=E0.x+(E1.x-E0.x)*u;p.y=E0.y+(E1.y-E0.y)*u;p.z=E0.z+(E1.z-E0.z)*u;
+        if(p.u>=1){p.st='rethr';p.t=0.45+rnd()*0.3;p.ang=rnd()*6.28;}return true;}
+      case 'rethr':{p.t-=dt;p.ang-=dt*14;p.x=RTX+0.135*Math.cos(p.ang);p.y=RTY+0.135*Math.sin(p.ang);p.z=RTZ+(p.a2%1-0.5)*0.22;
+        if(p.t<=0&&p.k==='head'){for(let i=0;i<p.n;i++)P.push({k:'kernel',st:'rfall',x:p.x,y:RTY-0.12,z:RTZ+(rnd()-.5)*0.2,vy:0,a1:rnd()*6.28,a2:rnd()*6.28,fate:'tank',ret:true,dmg:rnd()<Math.min(.9,(0.6*cur.dmgBase+0.25)/100*EXAG*2)});return false;}
+        if(p.t<=0){if(p.k==='kernel'&&!p.dmg&&rnd()<Math.min(.9,(0.6*cur.dmgBase+0.25)/100*EXAG*2))p.dmg=true;p.st='rfall';p.vy=0;p.y=RTY-0.12;p.z=RTZ;}return true;}
+      case 'rfall':{p.vy-=6*dt;p.y+=p.vy*dt;if(p.y<=RAY+0.02){p.st='raug';p.y=RAY+(rnd()-.5)*0.04;}return true;}
+      case 'raug':{if(p.rz===undefined)p.rz=-0.68+rnd()*1.36;p.z+=0.8*dt;if(p.z>=p.rz){p.tu=p.tx=p.tchk=p.cl=p.cs=p.rz=p.gp=undefined;p.st='fall';p.vx=0;p.vy=-0.2;p.vz=(rnd()-.5)*0.6;p.x=RTX+(rnd()-.5)*0.1;}return true;}
       case 'ret':{p.u+=dt*1.4/retLen;if(p.u>=1){
           const lost=p.k==='kernel'&&rnd()<Math.min(.85,cur.sep/100*EXAG);
           const dmg=p.dmg||(p.k==='kernel'&&rnd()<Math.min(.9,(1.5*cur.dmgBase+0.5)/100*EXAG*2));
+          if(p.k==='head'){for(let i=0;i<p.n;i++)P.push(newRP('kernel',{fate:rnd()<Math.min(.85,cur.sep/100*EXAG)?'lost':'tank',dmg:rnd()<Math.min(.9,(1.5*cur.dmgBase+0.5)/100*EXAG*2),ret:true}));return false;}
           P.push(newRP(p.k,{fate:p.k==='chaff'?'chaff':(lost?'lost':'tank'),dmg,ret:true}));return false;}
         retCurve.getPointAt(p.u,tv2);p.x=tv2.x;p.y=tv2.y;p.z=tv2.z;return true;}
-      case 'sieve2':{if(p.tchk===undefined){p.tchk=1;if(rnd()<Math.min(.8,cur.tailsL/100)){p.st='tailrun';p.ret=true;return true;}}p.x+=0.3*dt;p.y=lowY(p.x)+0.012;p.t-=dt;if(p.t<=0||p.x>LX1-0.2){p.st='fall3';p.vy=-0.2;}return true;}
+      case 'sieve2':{if(p.tchk===undefined){p.tchk=1;if(p.k==='head'||rnd()<Math.min(.8,cur.tailsL/100)){p.st='tailrun';p.ret=true;return true;}}p.x+=0.3*dt;p.y=lowY(p.x)+0.012;p.t-=dt;if(p.t<=0||p.x>LX1-0.2){p.st='fall3';p.vy=-0.2;}return true;}
       case 'fall3':{p.vy-=6*dt;p.y+=p.vy*dt;const py=panY(p.x);if(p.y<=py+0.012){p.st='pan';p.y=py+0.012;}return true;}
       case 'pan':{const d=AUGX-p.x;p.x+=Math.sign(d)*Math.min(Math.abs(d),1.2*dt);p.y=panY(p.x)+0.012;p.z+=(0-p.z)*dt*1.5;if(Math.abs(d)<0.02){p.st='aug';p.x=AUGX+(rnd()-.5)*0.06;p.y=AUGY-0.03+rnd()*0.05;}return true;}
       case 'aug':{p.z-=0.9*dt;if(p.z<=ELZ+0.03){if(p.k==='chaff')counts.imp++;else if(p.dmg)counts.dmg++;else counts.good++;return false;}return true;}
@@ -746,9 +851,10 @@ function build3D(){
       switch(p.k){
         case 'ear':put(mEar,p.x,p.y,p.z,0,0,fAng+0.15,ex,ey,ez);break;
         case 'kernel':{
-          const inTail=p.st==='tailrun'||p.st==='tfall'||p.st==='tpan'||p.st==='taug'||p.st==='ret';
+          const inTail=p.st==='tailrun'||p.st==='tfall'||p.st==='tpan'||p.st==='taug'||p.st==='ret'||p.st==='relev'||p.st==='rethr'||p.st==='rfall'||p.st==='raug';
           put(inTail?mRet:(p.dmg?mDmg:(p.ret?mRet:mGood)),p.x,p.y,p.z,p.a1,p.a2,0,p.dmg&&!inTail?kx*0.8:kx,ky,kz);
           if(p.fate==='lost'&&(p.st==='exit'||p.st==='ground'||p.st==='blown'))put(mHalo,p.x,p.y,p.z,0,0,0,0.07,0.07,0.07);break;}
+        case 'head':put(mChunk,p.x,p.y,p.z,p.a1,p.a2,0,ex*0.42,ey*0.85,ez*0.85);break;
         case 'chunk':put(mChunk,p.x,p.y,p.z,p.a1,p.a2,0,ex*0.7,ey*1.05,ez*1.05);if(p.st==='exit'||p.st==='ground')put(mHalo,p.x,p.y,p.z,0,0,0,0.12,0.12,0.12);break;
         case 'straw':put(mStraw,p.x,p.y,p.z,p.a1,p.a2,p.st==='ground'?Math.PI/2:0.3,1,p.len,1);break;
         case 'chaff':{const cs=state.showImp?2.6:1;put(mChaff,p.x,p.y,p.z,p.a1,p.a2,0,cs,cs,cs);break;}
@@ -759,16 +865,16 @@ function build3D(){
 
   /* --- camera --- */
   const VIEWS={
-    all:{tx:0.4,ty:-0.6,tz:0,r:8.6,th:-0.28,ph:1.25,cut:false},
-    rotor:{tx:-0.9*cR,ty:-0.9*sR,tz:0,r:4.4,th:-0.42,ph:1.28,cut:false},
-    cut:{tx:-0.9*cR,ty:-0.9*sR,tz:0,r:2.3,th:Math.PI/2,ph:Math.PI/2-RANG,cut:true},
-    shoe:{tx:0.9,ty:-0.9,tz:0,r:6.6,th:0.08,ph:1.55,cut:false}
+    all:{tx:0.7,ty:-0.7,tz:0,r:7.0,th:-0.28,ph:1.25,cut:false},
+    rotor:{tx:-0.3*cR,ty:-0.3*sR,tz:0,r:3.4,th:-0.42,ph:1.28,cut:false},
+    cut:{tx:-0.45*cR,ty:-0.45*sR,tz:0,r:2.1,th:Math.PI/2,ph:Math.PI/2-RANG,cut:true},
+    shoe:{tx:0.9,ty:-0.95,tz:0,r:5.3,th:0.08,ph:1.55,cut:false}
   };
   const cam={...VIEWS.all},camT={...VIEWS.all};
-  const cutPlane=new THREE.Plane(new THREE.Vector3(-cR,-sR,0),-0.9),cutPlaneW=cutPlane.clone();
+  const cutPlane=new THREE.Plane(new THREE.Vector3(-cR,-sR,0),-0.45),cutPlaneW=cutPlane.clone();
   let cutOn=false;
   const capG=new THREE.Group();rotorFrame.add(capG);capG.visible=false;
-  {const d=new THREE.CircleGeometry(R0-0.002,48);d.rotateY(Math.PI/2);add(d,M(0x59616a,{roughness:.7}),-0.905,0,0,capG);}
+  {const d=new THREE.CircleGeometry(R0-0.002,48);d.rotateY(Math.PI/2);add(d,M(0x59616a,{roughness:.7}),-0.455,0,0,capG);}
   function setView(v){Object.assign(camT,VIEWS[v]);cutOn=VIEWS[v].cut;renderer.clippingPlanes=cutOn?[cutPlaneW]:[];capG.visible=cutOn;
     document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v?'true':'false'));}
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
@@ -793,12 +899,12 @@ function build3D(){
 
   /* --- labels --- */
   const W=(x,y,z)=>L2W(x,y,z).toArray();
-  const tagPos={1:W(XA+0.5,0.46,0.3),2:W(-1.7,-0.46,0.4),3:W(0.9,-0.46,0.4),4:[-0.1,abY(-0.1)+0.08,0.55],5:[2.05,rpY(2.05)+0.14,0.55],6:[FAN.x,FAN.y,0.62],7:[0.65,psY(0.65)+0.06,0.56],8:[2.4,chafY(2.4)+0.06,0.56],9:[2.1,lowY(2.1),0.56],10:[AUGX,AUGY-0.05,0.62],11:[TAILX,TAILY-0.06,0.62],12:W(0.5,0.64,-0.68),13:[4.1,-1.9,0.3],14:[(SX0*3+SX1)/4,chafY((SX0*3+SX1)/4)+0.32,0.3],15:[(SX0+SX1*3)/4,chafY((SX0+SX1*3)/4)+0.32,0.3]};
+  const tagPos={1:W(XA+0.5,0.46,0.3),2:W(-0.6,-0.46,0.4),3:W(0.9,-0.46,0.4),4:[0.05,abY(0.05)+0.08,0.8],5:[1.85,rpY(1.85)+0.14,0.8],6:[FAN.x,FAN.y,0.85],7:[0.45,psY(0.45)+0.06,0.8],8:[2.0,chafY(2.0)+0.06,0.8],9:[1.8,lowY(1.8),0.8],10:[AUGX,AUGY-0.05,0.85],11:[TAILX,TAILY-0.06,0.85],12:[(R7B.x+R7T.x)/2,(R7B.y+R7T.y)/2,-1.02],13:[3.5,-1.9,0.3],14:[(SX0*3+SX1)/4,chafY((SX0*3+SX1)/4)+0.32,0.3],15:[(SX0+SX1*3)/4,chafY((SX0+SX1*3)/4)+0.32,0.3],16:W((PL0+PL1)/2,-0.52,0.45),17:W((CV0+CV1)/2,-0.52,0.45),18:[(E0.x+E1.x)/2,(E0.y+E1.y)/2,-1.0],19:[RTX,RTY+0.28,RTZ-0.05],20:[RTX+0.1,RAY+0.05,0.75]};
   const tags=[...document.querySelectorAll('.tag')].map(t=>({el:t,v:new THREE.Vector3(...tagPos[t.dataset.n]),n:+t.dataset.n}));
   const tv=new THREE.Vector3();
   function placeTags(w,h){
     for(const t of tags){
-      const show=(!cutOn||t.n===1||t.n===2)&&(t.n<14||state.showImp);
+      const show=(!cutOn||t.n===1||t.n===2)&&(t.n!==12||state.model!=='800')&&(t.n<14||(t.n<16&&state.showImp)||(t.n===16&&state.plate)||(t.n===17&&state.covers)||(t.n>=18&&state.model==='800'));
       tv.copy(t.v).applyMatrix4(machineG.matrixWorld).project(camera);
       if(!show||tv.z>1||tv.z<-1||Math.abs(tv.x)>1.05||Math.abs(tv.y)>1.05){t.el.style.display='none';continue;}
       t.el.style.display='flex';t.el.style.transform=`translate(${((tv.x+1)/2*w).toFixed(1)}px,${((1-tv.y)/2*h).toFixed(1)}px) translate(-12px,-50%)`;
@@ -825,7 +931,7 @@ function build3D(){
     placeTags(host.clientWidth,host.clientHeight);
     requestAnimationFrame(frame);
   }
-  function onParams(){setLouvers();const c=CROPS[state.crop];goodMat.color.setHex(c.kc);earMat.color.setHex(c.earC);}
+  function onParams(){setLouvers();retTube.visible=state.model!=='800';rt8.visible=state.model==='800';plateG.visible=!!state.plate;plateThirds[0].visible=plateThirds[1].visible=!state.plateLeftOpen;coversG.visible=!!state.covers;const c=CROPS[state.crop];goodMat.color.setHex(c.kc);earMat.color.setHex(c.earC);}
   function resetCounts(){counts.good=counts.dmg=counts.lost=counts.imp=0;tankFill=0;}
   function reset(){P=[];resetCounts();}
   // whole machine (and ground) in one group so it can tilt with the terrain slope
